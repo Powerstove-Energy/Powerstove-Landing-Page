@@ -16,7 +16,7 @@ type Post = {
 const posts: Post[] = [
   {
     id: 1,
-    image: "/1.png",
+    image: "/1.webp",
     category: "INNOVATION",
     title: "How IoT is Revolutionizing Cooking in Nigeria",
     desc: "Our latest software update allows users to monitor their carbon savings in real-time...",
@@ -24,7 +24,7 @@ const posts: Post[] = [
   },
   {
     id: 2,
-    image: "/2.png",
+    image: "/2.webp",
     category: "CLIMATE ACTION",
     title: "The Path to Net Zero: Our Carbon Strategy",
     desc: "Discover how PowerStove is partnering with global agencies to offset millions of...",
@@ -32,7 +32,7 @@ const posts: Post[] = [
   },
   {
     id: 3,
-    image: "/3.png",
+    image: "/3.webp",
     category: "OUR COMMUNITY",
     title: "Empowering Women Entrepreneurs",
     desc: "Stories from our distribution partners who are building successful businesses while...",
@@ -40,7 +40,7 @@ const posts: Post[] = [
   },
   {
     id: 4,
-    image: "/4.png",
+    image: "/4.webp",
     category: "SUSTAINABILITY",
     title: "The Science Behind Bio-Pellets",
     desc: "Understanding why our agricultural waste-to-energy model is the most efficient fuel...",
@@ -48,7 +48,7 @@ const posts: Post[] = [
   },
   {
     id: 5,
-    image: "/5.png",
+    image: "/5.webp",
     category: "INNOVATION",
     title: "2024 Impact Report Preview",
     desc: "A sneak peek at our annual metrics: 1M+ lives touched and 500,000 tonnes of...",
@@ -56,7 +56,7 @@ const posts: Post[] = [
   },
   {
     id: 6,
-    image: "/6.png",
+    image: "/6.webp",
     category: "OUR COMMUNITY",
     title: "Clean Cooking for Schools",
     desc: "How we're expanding our institutional stove program to provide smoke-free...",

@@ -12,9 +12,9 @@ export default function Partners() {
 
 <div className="mt-10 flex flex-wrap items-center justify-center gap-10">
         {/* GreenTec Capital Partners */}
-     <img src="/greentec.png" alt="GreenTec Capital Partners" className="h-14 object-contain" />
-      <img src="/wri.png" alt="World Resources Institute" className="h-14 object-contain" />
-      <img src="/afd.png" alt="Agence Française de Développement" className="h-14 object-contain" />
+     <img src="/greentec.webp" alt="GreenTec Capital Partners" className="h-14 object-contain" />
+      <img src="/wri.webp" alt="World Resources Institute" className="h-14 object-contain" />
+      <img src="/afd.webp" alt="Agence Française de Développement" className="h-14 object-contain" />
       <img src="/usadf.png" alt="United States African Development Foundation" className="h-14 object-contain" />
       <img src="/allon.png" alt="AllOn" className="h-14 object-contain" />
     </div>
