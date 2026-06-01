@@ -10,7 +10,7 @@ export default function StatsBanner() {
     <section className="bg-[#F8F8F8] py-10 px-6">
       <div className="max-w-5xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-8">
         {stats.map((stat) => (
-          <div key={stat.label} className="flex flex-col gap-1">
+          <div key={stat.label} className="flex flex-col items-center lg:items-start gap-1 text-center lg:text-left">
             <span className="text-3xl sm:text-4xl font-extrabold text-gray-900">
               {stat.value}
             </span>

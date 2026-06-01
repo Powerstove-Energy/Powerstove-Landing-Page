@@ -1,5 +1,5 @@
+import AboutUsVideo from "@/app/components/AboutUsVideo";
 import AwardsTicker from "@/app/components/AwardsTicker";
-import StatsBanner from "@/app/components/StatsBanner";
 import Team from "@/app/components/Team";
 
 
@@ -23,38 +23,25 @@ export default function About() {
   return (
     <>
         {/*about  Section */}
-      <section className="bg-[#f8f8f8] flex flex-col  items-center justify-center text-center px-6 py-28">
+      <section className="bg-[#f8f8f8] flex flex-col items-center justify-center text-center px-6 py-16 sm:py-28">
+  <p className="text-[#FF9500] font-bold text-xs sm:text-sm uppercase tracking-widest">
+    WHO WE ARE
+  </p>
 
-        <p className="mt-6 text-[#FF9500] font-bold text-base sm:text-lg max-w-xl leading-relaxed">
-            WHO WE ARE
-        </p>
-         
-       
-        <h1 className="text-5xl sm:text-6xl font-extrabold text-gray-900 leading-tight max-w-5xl">
-          Empowering Homes And Businesses With Sustainable Energy
-        </h1>
-        <p className="mt-6 text-gray-500 text-base sm:text-lg max-w-xl leading-relaxed">
-            Powerstove Africa manufactures smart, smokeless clean
-            cookstoves that generate electricity and save lives across sub-
-            Saharan Africa.
+  <h1 className="mt-3 text-3xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight max-w-5xl">
+    Empowering Homes And Businesses With Sustainable Energy
+  </h1>
 
-         
-        </p>
-        
-      </section>
+  <p className="mt-4 sm:mt-6 text-gray-500 text-sm sm:text-base lg:text-lg max-w-xl leading-relaxed">
+    Powerstove Africa manufactures smart, smokeless clean cookstoves that
+    generate electricity and save lives across sub-Saharan Africa.
+  </p>
+</section>
 
 
 
 
-      <section className="max-w-6xl mx-auto px-6 py-10">
-        <div className="rounded-2xl overflow-hidden w-full h-64 sm:h-120">
-        <img
-          src="/about.png"
-          alt="Recycling symbol on blue bin"
-          className="w-full h-full object-cover"
-        />
-      </div>
-      </section>
+     <AboutUsVideo />
 
           <AwardsTicker />
       
@@ -161,7 +148,7 @@ export default function About() {
         {/* Right - Image with play button */}
         <div className="relative rounded-2xl overflow-hidden w-full h-72 sm:h-80">
           <img
-            src="/stove.png"
+            src="/our-mission.webp"
             alt="Powerstove cookstove in kitchen"
             className="w-full h-full object-cover"
           />

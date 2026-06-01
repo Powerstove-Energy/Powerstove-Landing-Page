@@ -21,7 +21,7 @@ const products: Product[] = [
     id: 1,
     badge: "FEATURED",
     badgeColor: "#FF9500",
-    image: "/powerstove-x200.png",
+    image: "/Powerstove X200.webp",
     category: "HOUSEHOLD COOKSTOVES",
     name: "Powerstove X200",
     desc: "Our flagship advanced household cookstove with slide-folding design, built-in 4200mAh Lithium Ion Battery, and continuous 10W/1V output. Cooks 5x faster while generating electricity. Includes IoT monitoring chip for carbon credits.",
@@ -30,7 +30,7 @@ const products: Product[] = [
   },
   {
     id: 2,
-    image: "/t100-pellet-stove.png",
+    image: "/GoodLife Biomass Pellets.webp",
     category: "HOUSEHOLD COOKSTOVES",
     name: "T100 Pellet Stove",
     desc: "Advanced efficient household cookstove with replaceable burn chamber, designed specifically for GoodLife Biomass Pellets. Lower smoke emissions and 60% more efficient than charcoal cooking. Ideal for urban households.",
@@ -41,7 +41,7 @@ const products: Product[] = [
     id: 3,
     badge: "NEW",
     badgeColor: "#22c55e",
-    image: "/power-stove-x-100.png",
+    image: "/Powerstov X200.webp",
     category: "HOUSEHOLD COOKSTOVES",
     name: "Powerstove X200",
     desc: "Our flagship advanced household cookstove with slide-folding design, built-in 4200mAh Lithium Ion Battery, and continuous 10W/1V output. Cooks 5x faster while generating electricity. Includes IoT monitoring chip for carbon credits.",
@@ -50,7 +50,7 @@ const products: Product[] = [
   },
   {
     id: 4,
-    image: "/T400.jpg",
+    image: "/W100 Rocket Stove.webp",
     category: "T400",
     name: "W100 Rocket Stove",
     desc: "World's most fuel-efficient rocket stove designed for household and small enterprise use. Uses any biomass fuel. Ideal for community kitchens, small restaurants and catering businesses.",
@@ -59,7 +59,7 @@ const products: Product[] = [
   },
   {
     id: 5,
-    image: "/goodlife-pellets.jpeg",
+    image: "/Powerstove3.webp",
     category: "FUEL & BIOMASS",
     name: "GoodLife Biomass Pellets",
     desc: "Locally produced high-density biomass briquette pellets from agricultural waste. Clean-burning, consistent heat output, and zero deforestation impact. Available in 3kg, 10kg and 50kg sacks for households and businesses.",
@@ -68,7 +68,7 @@ const products: Product[] = [
   },
   {
     id: 6,
-    image: "/goodlife-pellets-2.jpg",
+    image: "/Biomass pellets.webp",
     category: "FUEL & BIOMASS",
     name: "GoodLife Biomass Pellets",
     desc: "Locally produced high-density biomass briquette pellets from agricultural waste. Clean-burning, consistent heat output, and zero deforestation impact. Available in 3kg, 10kg and 50kg sacks for households and businesses.",
@@ -77,7 +77,7 @@ const products: Product[] = [
   },
   {
     id: 7,
-    image: "/Hot Bird Burner.jpg",
+    image: "/Mini Electricity Kit.webp",
     category: "OFF-GRID ELECTRICITY",
     name: "Hot Bird Burner",
     desc: "Complete off-grid electricity generation kit compatible with the Powerstove X200. Extends the stove's power output to run larger appliances, store excess energy, and power homes after cooking hours.",
@@ -86,7 +86,7 @@ const products: Product[] = [
   },
   {
     id: 8,
-    image: "/u100.jpg",
+    image: "/Solar Box.webp",
     category: "OFF-GRID ELECTRICITY",
     name: "Stove",
     desc: "Complete off-grid electricity generation kit compatible with the Powerstove X200. Extends the stove's power output to run larger appliances, store excess energy, and power homes after cooking hours.",
@@ -95,7 +95,7 @@ const products: Product[] = [
   },
   {
     id: 9,
-    image: "/solar-box.png",
+    image: "/Electricity Kit.webp",
     category: "OFF-GRID ELECTRICITY",
     name: "Solar Box",
     desc: "Portable solar power box for lighting, phone charging, and small device power. Works as a standalone off-grid power unit or complement to the Powerstove electricity generation kit.",

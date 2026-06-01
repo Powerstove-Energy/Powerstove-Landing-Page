@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
-
 type NavLink = {
   label: string;
   href: string;
@@ -16,13 +15,11 @@ const navLinks: NavLink[] = [
   { label: "Home", href: "/" },
   { label: "About", href: "/about" },
   { label: "Products", href: "/products" },
-  {
-    label: "Our Impact",
-    href: "/our-impact",
-  },
+  { label: "Our Impact", href: "/our-impact" },
   { label: "Contact Us", href: "/contact-us" },
   { label: "Blog", href: "/blog" },
   { label: "Partners", href: "/partners" },
+  { label: "Distributor", href: "/distributor" },
 ];
 
 export default function Navbar() {
@@ -36,16 +33,17 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-           <Image 
-           src="/logo.png" 
-           alt="Powerstove"
-            width={140} 
-            height={40} 
-            priority />
+            <Image
+              src="/logo.png"
+              alt="Powerstove"
+              width={140}
+              height={40}
+              priority
+            />
           </Link>
 
           {/* Desktop Nav Links */}
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden lg:flex items-center gap-1">
             {navLinks.map((link) =>
               link.hasDropdown ? (
                 <div
@@ -79,16 +77,12 @@ export default function Navbar() {
                       />
                     </svg>
                   </button>
-
-                  {/* Active underline */}
                   {activeLink === link.label && (
                     <span
                       className="absolute bottom-0 left-4 right-4 h-0.5 rounded-full"
                       style={{ backgroundColor: "#FF9500" }}
                     />
                   )}
-
-                  {/* Dropdown */}
                   {dropdownOpen && (
                     <div className="absolute top-full left-0 mt-1 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
                       {link.dropdown?.map((item: any) => (
@@ -127,8 +121,8 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* CTA Button */}
-          <div className="hidden md:block">
+          {/* Desktop CTA Button */}
+          <div className="hidden lg:block">
             <Link
               href="/buy"
               className="inline-flex items-center px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 active:scale-95"
@@ -140,7 +134,7 @@ export default function Navbar() {
 
           {/* Mobile menu button */}
           <button
-            className="md:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+            className="lg:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -159,7 +153,7 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-1">
+        <div className="lg:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-1">
           {navLinks.map((link) => (
             <div key={link.label}>
               <Link
@@ -176,16 +170,17 @@ export default function Navbar() {
               >
                 {link.label}
               </Link>
-              {link.hasDropdown && link.dropdown?.map((item) => (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block pl-7 py-2 text-sm text-gray-500 hover:text-[#FF9500] transition-colors"
-                >
-                  {item.label}
-                </Link>
-              ))}
+              {link.hasDropdown &&
+                link.dropdown?.map((item) => (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block pl-7 py-2 text-sm text-gray-500 hover:text-[#FF9500] transition-colors"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
             </div>
           ))}
           <div className="pt-2">

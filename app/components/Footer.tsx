@@ -6,7 +6,6 @@ const companyLinks = [
   { label: "Products", href: "/products" },
   { label: "Partners & Recognition", href: "/partners" },
   { label: "Contact Us", href: "/contact" },
-  { label: "Testimonials", href: "/testimonials" },
 ];
 
 const resourceLinks = [
@@ -15,7 +14,7 @@ const resourceLinks = [
   { label: "Publications", href: "/publications" },
   { label: "Newsroom", href: "/newsroom" },
   { label: "Hiring", href: "/hiring" },
-  { label: "Distributors", href: "/distributors" },
+  { label: "Distributors", href: "/distributor" },
 ];
 
 const socialLinks = [
@@ -36,7 +35,7 @@ export default function Footer() {
           <div className="space-y-4">
             <Link href="/" className="flex items-center gap-2">
               <Image 
-                src="/logo2.png"
+                src="/logo.png"
                 alt="Powerstove"
                 width={140} 
                 height={40} 

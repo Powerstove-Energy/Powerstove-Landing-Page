@@ -4,6 +4,7 @@ import Image from "next/image"
 import AwardsTicker from "@/app/components/AwardsTicker";
 import CallToAction from "@/app/components/CallToAction";
 import RecycleImage from "@/app/components/RecycleImage";
+import OurImpactVideo from "@/app/components/OurImpactVideo";
 
 
 
@@ -46,7 +47,7 @@ const stats = [
       "Measuring carbon offsets, health improvements, and economic empowerment across communities in Nigeria.",
     year: "2022",
     href: "#",
-    image: "/report2.png", // replace with your actual image path
+    image: "/stve.webp", // replace with your actual image path
     imageBg: "bg-gray-200",
   },
 ];
@@ -57,23 +58,23 @@ export default function Page() {
   return (
   <>
        {/*Products  Section */}
-      <section className="bg-[#f8f8f8] flex flex-col  items-center justify-center text-center px-6 py-28">
+      <section className="bg-[#f8f8f8] flex flex-col items-center justify-center text-center px-6 py-16 sm:py-28">
+  <p className="text-[#FF9500] font-bold text-xs sm:text-sm uppercase tracking-widest">
+    PURPOSE DRIVEN REPORT
+  </p>
 
-        <p className="mt-6 text-[#FF9500] font-bold text-base sm:text-lg max-w-xl leading-relaxed">
-           PURPOSE DRIVEN REPORT
-        </p>
-         
-       
-        <h1 className="text-5xl sm:text-6xl font-extrabold text-gray-900 leading-tight max-w-4xl">
-          Our Impact Report
-        </h1>
-        <p className="mt-6 text-gray-500 text-base sm:text-lg max-w-xl leading-relaxed">
-            Measuring our contribution to a cleaner, healthier Africa.
-        </p>
-        
-      </section>
+  <h1 className="mt-3 text-3xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight max-w-4xl">
+    Our Impact Report
+  </h1>
 
-        <RecycleImage />
+  <p className="mt-4 sm:mt-6 text-gray-500 text-sm sm:text-base lg:text-lg max-w-xl leading-relaxed">
+    Measuring our contribution to a cleaner, healthier Africa.
+  </p>
+</section>
+
+
+      <OurImpactVideo />
+
             
             <AwardsTicker />
 

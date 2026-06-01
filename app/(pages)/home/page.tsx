@@ -5,6 +5,7 @@ import RecycleImage from "@/app/components/RecycleImage";
 import StatsBanner from "@/app/components/StatsBanner";
 import AwardsTicker from "@/app/components/AwardsTicker";
 import Partners from "@/app/components/Partners";
+import HowItWorks from "@/app/components/HowPowerstoveWorks";
 
 
 
@@ -28,31 +29,31 @@ export default function Section() {
   return (
     <main>
       {/* Hero Section */}
-      <section className="bg-[#F8F8F8] flex flex-col items-center justify-center text-center px-6 py-28">
-        <h1 className="text-5xl sm:text-6xl font-extrabold text-gray-900 leading-tight max-w-5xl">
-          Empowering Homes And Businesses With Sustainable Energy
-        </h1>
-        <p className="mt-6 text-gray-500 text-base sm:text-lg max-w-xl leading-relaxed">
-          The world&apos;s first clean cookstove with built-in IoT — smokeless,
-          cooks 5x faster, and generates up to 50W of electricity for African
-          homes and businesses.
-        </p>
-        <div className="mt-8 flex flex-wrap gap-4 justify-center">
-          <Link
-            href="/buy"
-            className="px-6 py-3 rounded-md text-sm font-semibold text-white transition hover:opacity-90"
-            style={{ backgroundColor: "#FF9500" }}
-          >
-            Buy Product
-          </Link>
-          <Link
-            href="/about"
-            className="px-6 py-3 rounded-md text-sm font-semibold text-gray-800 border border-gray-300 hover:bg-gray-100 transition"
-          >
-            Learn More
-          </Link>
-        </div>
-      </section>
+     <section className="bg-[#F8F8F8] flex flex-col items-center justify-center text-center px-6 py-16 sm:py-28">
+  <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight max-w-5xl">
+    Empowering Homes And Businesses With Sustainable Energy
+  </h1>
+  <p className="mt-4 sm:mt-6 text-gray-500 text-sm sm:text-base lg:text-lg max-w-xl leading-relaxed">
+    The world&apos;s first clean cookstove with built-in IoT — smokeless,
+    cooks 5x faster, and generates up to 50W of electricity for African
+    homes and businesses.
+  </p>
+  <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto justify-center">
+    <Link
+      href="/buy"
+      className="px-6 py-3 rounded-md text-sm font-semibold text-white transition hover:opacity-90 text-center"
+      style={{ backgroundColor: "#FF9500" }}
+    >
+      Buy Product
+    </Link>
+    <Link
+      href="/about"
+      className="px-6 py-3 rounded-md text-sm font-semibold text-gray-800 border border-gray-300 hover:bg-gray-100 transition text-center"
+    >
+      Learn More
+    </Link>
+  </div>
+</section>
 
       <RecycleImage />
 
@@ -66,7 +67,7 @@ export default function Section() {
         {/* Image */}
         <div className="rounded-2xl overflow-hidden w-full h-72 sm:h-96 relative">
         <img
-          src="/purpose.png"
+          src="/clean.webp"
           alt="Solar panels representing sustainable energy"
           className="w-full h-full object-cover"
         />
@@ -181,59 +182,7 @@ export default function Section() {
       <RenewableServices />
 
         {/* How Powerstove Works Section */}
-        <section className="py-20 px-6">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-12">
-              <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#FF9500" }}>
-                Our Process
-              </span>
-              <h2 className="mt-3 text-3xl sm:text-4xl font-extrabold text-gray-900 leading-tight">
-                How Powerstove Works: Planning <br className="hidden sm:block" /> To Powering Your Home
-              </h2>
-              <div className="mt-3 mx-auto w-10 h-1 rounded-full" style={{ backgroundColor: "#FF9500" }} />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[
-                {
-                  number: "01",
-                  title: "Energy Consultation",
-                  desc: "We assess your household or business energy needs and recommend the right Powerstove product and pellet plan for your usage.",
-                  img: "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=600&q=80",
-                },
-                {
-                  number: "02",
-                  title: "Custom System Design",
-                  desc: "Our team designs a complete cooking and off-grid power solution — including stove selection, pellet schedule, and IoT setup.",
-                  img: "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=600&q=80",
-                },
-                {
-                  number: "03",
-                  title: "Professional Installation",
-                  desc: "Trained Powerstove distributors deliver and set up your stove, activate the IoT module, and show you how to use it safely.",
-                  img: "set.png",
-                },
-                {
-                  number: "04",
-                  title: "Activation & Monitoring",
-                  desc: "Your stove goes live with real-time data tracking. Monitor usage, carbon savings, and electricity generation from day one.",
-                  img: "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=600&q=80",
-                },
-              ].map((step) => (
-                <div key={step.number} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col">
-                  <div className="w-full h-48 overflow-hidden">
-                    <img src={step.img} alt={step.title} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="p-6 flex flex-col gap-2">
-                    <span className="text-sm font-bold" style={{ color: "#FF9500" }}>{step.number}</span>
-                    <h3 className="text-base font-bold text-gray-900">{step.title}</h3>
-                    <p className="text-sm text-gray-500 leading-relaxed">{step.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        <HowItWorks />
 
         {/* Real Stories / Testimonials Section */}
         <section className="bg-white py-20 px-6">

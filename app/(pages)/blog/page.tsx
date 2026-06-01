@@ -6,51 +6,53 @@ import BlogGrid from "@/app/components/BlogGrid";
 export default function BlogPage() {
   return (
     <main>
-      <section className="w-full px-6 py-16 bg-white">
-      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-10">
-        
-        {/* Left Content */}
-        <div className="flex-1">
-          <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#FF9500" }}>
-            Featured Story
-          </span>
-          <h1 className="mt-3 text-4xl sm:text-5xl font-extrabold text-gray-900 leading-tight">
-            Insights for a <br /> Greener Future
-          </h1>
-          <p className="mt-5 text-gray-500 text-base leading-relaxed max-w-md">
-            Exploring how IoT-enabled clean energy technology is transforming
-            households across Sub-Saharan Africa and mitigating climate change.
-          </p>
-          <Link
-            href="/blog/featured"
-            className="mt-8 inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold text-white transition hover:opacity-90"
-            style={{ backgroundColor: "#FF9500" }}
-          >
-            Read Story →
-          </Link>
-        </div>
+   <section className="w-full px-6 py-12 sm:py-16 bg-white">
+  <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-8 lg:gap-10">
 
-        {/* Right Image - browser mockup */}
-        <div className="flex-1 w-full">
-          <div
-            className="rounded-2xl overflow-hidden shadow-xl"
-            style={{ backgroundColor: "#FF9500" }}
-          >
-            <Image
-              src="/blog-hero.png"
-              alt="Powerstove clean energy home"
-              width={800}
-              height={500}
-              className="w-full h-auto object-cover"
-              priority
-            />
-          </div>
-        </div>
-
+    {/* Left Content */}
+    <div className="flex-1 text-center lg:text-left">
+      <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#FF9500" }}>
+        Featured Story
+      </span>
+      <h1 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight">
+        How Powerstove's Pay-As-You-Cook Model Benefits Women in African Households
+      </h1>
+      <p className="mt-4 sm:mt-5 text-gray-500 text-sm sm:text-base leading-relaxed max-w-md mx-auto lg:mx-0">
+        Powerstove's innovative Pay-As-You-Cook (PAYC) financing model is designed to make clean
+        cooking accessible while eliminating the upfront cost barrier — empowering women across
+        Africa financially, socially, and environmentally.
+      </p>
+      <div className="flex justify-center lg:justify-start">
+        <Link
+          href="/blog/featured"
+          className="mt-6 sm:mt-8 inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold text-white transition hover:opacity-90"
+          style={{ backgroundColor: "#FF9500" }}
+        >
+          Read Story →
+        </Link>
       </div>
-    </section>
-      {/* rest of blog content */}
+    </div>
 
+    {/* Right Image */}
+    <div className="flex-1 w-full">
+      <div className="rounded-2xl overflow-hidden">
+        <Image
+          src="/blog.webp"
+          alt="Powerstove clean energy home"
+          width={800}
+          height={500}
+          className="w-full h-auto object-cover"
+          priority
+        />
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+
+      {/*  blog content */}
       <BlogGrid />
 
       <section className="py-16 px-6">
@@ -77,7 +79,7 @@ export default function BlogPage() {
           placeholder="Enter your email address"
           className="px-4 py-3 rounded-lg text-sm text-gray-700 outline-none w-full lg:w-72 bg-white"
         />
-        <button className="px-6 py-3 rounded-lg text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 transition whitespace-nowrap">
+        <button className="px-6 py-3 rounded-lg text-sm font-semibold text-white border border-white hover:bg-gray-800 transition whitespace-nowrap">
           Subscribe
         </button>
       </div>
