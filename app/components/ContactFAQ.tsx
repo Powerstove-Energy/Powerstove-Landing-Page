@@ -1,5 +1,6 @@
+// ContactFAQ.tsx
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const faqs = [
   {
@@ -28,14 +29,38 @@ const faqs = [
   },
 ];
 
+function useInView(threshold = 0.15) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
+      { threshold }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [threshold]);
+  return { ref, visible };
+}
+
 export default function ContactFAQ() {
   const [open, setOpen] = useState<number | null>(0);
+  const { ref: headerRef, visible: headerVisible } = useInView(0.2);
 
   return (
     <section className="bg-[#f8f8f8] px-6 py-20">
       <div className="max-w-3xl mx-auto">
+
         {/* Header */}
-        <div className="text-center mb-10">
+        <div
+          ref={headerRef}
+          className="text-center mb-10"
+          style={{
+            opacity: headerVisible ? 1 : 0,
+            transform: headerVisible ? "translateY(0)" : "translateY(30px)",
+            transition: "opacity 0.7s ease, transform 0.7s ease",
+          }}
+        >
           <p className="text-[#FF9500] text-xs font-bold tracking-widest uppercase mb-2">
             FAQ&apos;s
           </p>
@@ -51,30 +76,67 @@ export default function ContactFAQ() {
         {/* Accordion */}
         <div className="flex flex-col gap-3">
           {faqs.map((faq, i) => (
-            <div
+            <FaqItem
               key={i}
-              className="bg-white rounded-xl border border-[#FF9500]/20 overflow-hidden"
-            >
-              <button
-                onClick={() => setOpen(open === i ? null : i)}
-                className="w-full flex items-center justify-between px-6 py-5 text-left"
-              >
-                <span className="text-sm font-semibold text-gray-900">
-                  {faq.q}
-                </span>
-                <span className="text-[#FF9500] text-lg font-light ml-4 shrink-0">
-                  {open === i ? "−" : "+"}
-                </span>
-              </button>
-              {open === i && (
-                <div className="px-6 pb-5 text-sm text-gray-500 leading-relaxed border-t border-[#FF9500]/10 pt-4">
-                  {faq.a}
-                </div>
-              )}
-            </div>
+              faq={faq}
+              index={i}
+              isOpen={open === i}
+              onToggle={() => setOpen(open === i ? null : i)}
+            />
           ))}
         </div>
       </div>
     </section>
+  );
+}
+
+function FaqItem({
+  faq,
+  index,
+  isOpen,
+  onToggle,
+}: {
+  faq: { q: string; a: string };
+  index: number;
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
+  const { ref, visible } = useInView(0.1);
+
+  return (
+    <div
+      ref={ref}
+      className="bg-white rounded-xl border border-[#FF9500]/20 overflow-hidden"
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(24px)",
+        transition: `opacity 0.5s ease ${index * 0.08}s, transform 0.5s ease ${index * 0.08}s`,
+      }}
+    >
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-between px-6 py-5 text-left"
+      >
+        <span className="text-sm font-semibold text-gray-900">{faq.q}</span>
+        <span
+          className="text-[#FF9500] text-lg font-light ml-4 shrink-0 transition-transform duration-300"
+          style={{ transform: isOpen ? "rotate(45deg)" : "rotate(0deg)" }}
+        >
+          +
+        </span>
+      </button>
+
+      <div
+        style={{
+          maxHeight: isOpen ? "400px" : "0px",
+          overflow: "hidden",
+          transition: "max-height 0.4s ease",
+        }}
+      >
+        <div className="px-6 pb-5 text-sm text-gray-500 leading-relaxed border-t border-[#FF9500]/10 pt-4">
+          {faq.a}
+        </div>
+      </div>
+    </div>
   );
 }

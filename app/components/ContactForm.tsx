@@ -1,5 +1,6 @@
+// ContactForm.tsx
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const subjects = [
   "Product Enquiry",
@@ -9,17 +10,40 @@ const subjects = [
   "Other",
 ];
 
+function useInView(threshold = 0.15) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
+      { threshold }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [threshold]);
+  return { ref, visible };
+}
+
 export default function ContactForm() {
   const [subject, setSubject] = useState("");
+  const { ref: leftRef, visible: leftVisible } = useInView(0.15);
+  const { ref: rightRef, visible: rightVisible } = useInView(0.15);
 
   return (
     <section className="bg-[#f8f8f8] px-6 py-20">
       <div className="max-w-5xl mx-auto flex flex-col lg:flex-row gap-8">
 
         {/* Left card */}
-        <div className="bg-[#FF9500] rounded-2xl p-8 text-white w-full lg:w-72 shrink-0 flex flex-col gap-6">
+        <div
+          ref={leftRef}
+          style={{
+            opacity: leftVisible ? 1 : 0,
+            transform: leftVisible ? "translateX(0)" : "translateX(-50px)",
+            transition: "opacity 0.7s ease, transform 0.7s ease",
+          }}
+          className="bg-[#FF9500] rounded-2xl p-8 text-white w-full lg:w-72 shrink-0 flex flex-col gap-6"
+        >
           <h2 className="text-2xl font-extrabold">Get In Touch</h2>
-
           <div className="flex flex-col gap-5 text-sm leading-relaxed">
             <div className="flex gap-2">
               <span className="mt-0.5">📍</span>
@@ -50,16 +74,22 @@ export default function ContactForm() {
         </div>
 
         {/* Right form */}
-        <div className="flex-1 bg-white rounded-2xl p-8 flex flex-col gap-6">
+        <div
+          ref={rightRef}
+          style={{
+            opacity: rightVisible ? 1 : 0,
+            transform: rightVisible ? "translateX(0)" : "translateX(50px)",
+            transition: "opacity 0.7s ease 0.15s, transform 0.7s ease 0.15s",
+          }}
+          className="flex-1 bg-white rounded-2xl p-8 flex flex-col gap-6"
+        >
           <h2 className="text-2xl font-bold text-gray-900">Send us a message</h2>
 
-          <div>
-            <input
-              type="text"
-              placeholder="Your Name"
-              className="w-full border-b border-gray-200 py-2 text-sm text-gray-700 placeholder-gray-400 outline-none focus:border-[#FF9500] transition-colors bg-transparent"
-            />
-          </div>
+          <input
+            type="text"
+            placeholder="Your Name"
+            className="w-full border-b border-gray-200 py-2 text-sm text-gray-700 placeholder-gray-400 outline-none focus:border-[#FF9500] transition-colors bg-transparent"
+          />
 
           <div className="flex flex-col sm:flex-row gap-6">
             <input

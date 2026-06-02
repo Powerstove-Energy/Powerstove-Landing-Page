@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useState, useEffect, useRef } from "react";
 
 const services = [
   {
@@ -34,21 +33,21 @@ const services = [
       "Dual-purpose: cook and power your home simultaneously",
     ],
   },
- {
-  category: "Biomass Fuel Production",
-  icon: "/p3.jpg",
-  title: "GoodLife Pellet Systems",
-  desc: "Our GoodLife Pellet Systems facilitate the production of biomass fuel, offering a sustainable alternative to traditional fuels. These systems convert organic wastes from wood and post-harvest crops into high-quality pellets, which can be used in our cookstoves and other biomass applications. This not only helps reduce waste but also promotes circular economy practices, providing an affordable energy source for communities.",
-  img: "/Powerstove3.webp",
-  href: "/products",
-  details: [
-    "Converts agricultural waste into clean, high-density pellets",
-    "70% more fuel-efficient than traditional charcoal",
-    "Virtually smokeless — improves indoor air quality",
-    "Supports circular economy and zero deforestation",
-    "Available in 3kg, 10kg and 30kg packs for households and businesses",
-  ],
-},
+  {
+    category: "Biomass Fuel Production",
+    icon: "/p3.jpg",
+    title: "GoodLife Pellet Systems",
+    desc: "Our GoodLife Pellet Systems facilitate the production of biomass fuel, offering a sustainable alternative to traditional fuels. These systems convert organic wastes from wood and post-harvest crops into high-quality pellets, which can be used in our cookstoves and other biomass applications. This not only helps reduce waste but also promotes circular economy practices, providing an affordable energy source for communities.",
+    img: "/Powerstove3.webp",
+    href: "/products",
+    details: [
+      "Converts agricultural waste into clean, high-density pellets",
+      "70% more fuel-efficient than traditional charcoal",
+      "Virtually smokeless — improves indoor air quality",
+      "Supports circular economy and zero deforestation",
+      "Available in 3kg, 10kg and 30kg packs for households and businesses",
+    ],
+  },
   {
     category: "Smart Technology",
     icon: "/p4.jpg",
@@ -98,6 +97,89 @@ const services = [
 
 type Service = (typeof services)[0];
 
+function useInView(threshold = 0.15) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
+      { threshold }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [threshold]);
+  return { ref, visible };
+}
+
+function AnimatedHeader() {
+  const { ref, visible } = useInView(0.2);
+  return (
+    <div
+      ref={ref}
+      className="text-center mb-12"
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(30px)",
+        transition: "opacity 0.7s ease, transform 0.7s ease",
+      }}
+    >
+      <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#FF9500" }}>
+        What We Offer
+      </span>
+      <h2 className="mt-3 text-3xl sm:text-4xl font-extrabold text-gray-900 leading-tight">
+        Our Renewable Energy Services
+      </h2>
+      <p className="mt-3 text-gray-500 text-sm sm:text-base max-w-md mx-auto">
+        Renewable support meets community-first innovation to power a greener Africa.
+      </p>
+      <div className="mt-4 mx-auto w-10 h-1 rounded-full" style={{ backgroundColor: "#FF9500" }} />
+    </div>
+  );
+}
+
+function ServiceCard({ service, index, onSelect }: { service: Service; index: number; onSelect: () => void }) {
+  const { ref, visible } = useInView(0.15);
+
+  return (
+    <div
+      ref={ref}
+      className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm"
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible
+          ? "translateY(0) scale(1)"
+          : "translateY(40px) scale(0.97)",
+        transition: `opacity 0.6s ease ${index * 0.1}s, transform 0.6s ease ${index * 0.1}s`,
+      }}
+    >
+      <div className="w-full h-52 overflow-hidden">
+        <img
+          src={service.img}
+          alt={service.title}
+          className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+        />
+      </div>
+      <div className="p-6">
+        <span
+          className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1"
+          style={{ color: "#FF9500" }}
+        >
+          <img src={service.icon} alt="" className="w-4 h-4 rounded-full object-cover" />
+          {service.category}
+        </span>
+        <h3 className="mt-1 text-lg font-extrabold text-gray-900">{service.title}</h3>
+        <button
+          onClick={onSelect}
+          className="mt-4 inline-flex items-center gap-1 text-sm font-semibold transition-all duration-200 hover:gap-2"
+          style={{ color: "#FF9500" }}
+        >
+          View Detail →
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function Modal({ service, onClose }: { service: Service; onClose: () => void }) {
   return (
     <div
@@ -107,27 +189,29 @@ function Modal({ service, onClose }: { service: Service; onClose: () => void }) 
     >
       <div
         className="bg-white rounded-2xl overflow-hidden w-full max-w-4xl shadow-2xl flex flex-col sm:flex-row"
+        style={{ animation: "modalIn 0.3s ease" }}
         onClick={(e) => e.stopPropagation()}
       >
+        <style>{`
+          @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+          }
+        `}</style>
+
         {/* Left: Image */}
-<div className="w-full sm:w-1/2 h-56 sm:h-auto overflow-hidden shrink-0">          <img
-            src={service.img}
-            alt={service.title}
-            className="w-full h-full object-cover"
-          />
+        <div className="w-full sm:w-1/2 h-56 sm:h-auto overflow-hidden shrink-0">
+          <img src={service.img} alt={service.title} className="w-full h-full object-cover" />
         </div>
 
         {/* Right: Content */}
         <div className="flex-1 p-6 overflow-y-auto max-h-[80vh] relative">
-          {/* Close */}
           <button
             onClick={onClose}
             className="absolute top-3 right-3 w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 transition flex items-center justify-center text-gray-500 text-xs font-bold"
           >
             ✕
           </button>
-
-          {/* Category */}
           <span
             className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5"
             style={{ color: "#FF9500" }}
@@ -135,25 +219,12 @@ function Modal({ service, onClose }: { service: Service; onClose: () => void }) 
             <img src={service.icon} alt="" className="w-4 h-4 rounded-full object-cover" />
             {service.category}
           </span>
-
-          {/* Title */}
-          <h3 className="mt-2 text-xl font-extrabold text-gray-900 leading-snug">
-            {service.title}
-          </h3>
-
-          {/* Description */}
-          <p className="mt-3 text-sm text-gray-500 leading-relaxed">
-            {service.desc}
-          </p>
-
-          {/* Bullet points */}
+          <h3 className="mt-2 text-xl font-extrabold text-gray-900 leading-snug">{service.title}</h3>
+          <p className="mt-3 text-sm text-gray-500 leading-relaxed">{service.desc}</p>
           <ul className="mt-4 space-y-2">
             {service.details.map((point, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                <span
-                  className="mt-1 w-2 h-2 rounded-full shrink-0"
-                  style={{ backgroundColor: "#FF9500" }}
-                />
+                <span className="mt-1 w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: "#FF9500" }} />
                 {point}
               </li>
             ))}
@@ -171,57 +242,15 @@ export default function RenewableServices() {
     <>
       <section className="bg-white py-20 px-6">
         <div className="max-w-5xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-12">
-            <span
-              className="text-xs font-bold uppercase tracking-widest"
-              style={{ color: "#FF9500" }}
-            >
-              What We Offer
-            </span>
-            <h2 className="mt-3 text-3xl sm:text-4xl font-extrabold text-gray-900 leading-tight">
-              Our Renewable Energy Services
-            </h2>
-            <p className="mt-3 text-gray-500 text-sm sm:text-base max-w-md mx-auto">
-              Renewable support meets community-first innovation to power a greener Africa.
-            </p>
-            <div
-              className="mt-4 mx-auto w-10 h-1 rounded-full"
-              style={{ backgroundColor: "#FF9500" }}
-            />
-          </div>
-
-          {/* Grid */}
+          <AnimatedHeader />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-            {services.map((service) => (
-              <div key={service.title} className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
-                <div className="w-full h-52 overflow-hidden">
-                  <img
-                    src={service.img}
-                    alt={service.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="p-6">
-                  <span
-                    className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1"
-                    style={{ color: "#FF9500" }}
-                  >
-                    <img src={service.icon} alt="" className="w-4 h-4 rounded-full object-cover" />
-                     {service.category}
-                  </span>
-                  <h3 className="mt-1 text-lg font-extrabold text-gray-900">
-                    {service.title}
-                  </h3>
-                  <button
-                    onClick={() => setSelected(service)}
-                    className="mt-4 inline-flex items-center gap-1 text-sm font-semibold transition hover:gap-2"
-                    style={{ color: "#FF9500" }}
-                  >
-                    View Detail →
-                  </button>
-                </div>
-              </div>
+            {services.map((service, index) => (
+              <ServiceCard
+                key={service.title}
+                service={service}
+                index={index}
+                onSelect={() => setSelected(service)}
+              />
             ))}
           </div>
         </div>

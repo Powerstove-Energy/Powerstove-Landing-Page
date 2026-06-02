@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
 import { ShoppingCart, Handshake, Building2, Globe } from "lucide-react";
 
 const partnerTypes = [
@@ -61,46 +64,93 @@ const steps = [
   },
 ];
 
+// ── animation primitives ──────────────────────────────────────────────────────
+
+function useInView(threshold = 0.15) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
+      { threshold }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [threshold]);
+  return { ref, visible };
+}
+
+function FadeUp({
+  children,
+  delay = 0,
+  className = "",
+}: {
+  children: React.ReactNode;
+  delay?: number;
+  className?: string;
+}) {
+  const { ref, visible } = useInView(0.15);
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(32px)",
+        transition: `opacity 0.7s ease ${delay}s, transform 0.7s ease ${delay}s`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function DistributorSections() {
   return (
     <>
       {/* Who Are Our Distributors */}
       <section className="py-20 px-6 bg-white">
         <div className="max-w-5xl mx-auto">
+
+          {/* heading */}
           <div className="text-center mb-12">
-            <span
-              className="text-xs font-bold uppercase tracking-widest"
-              style={{ color: "#FF9500" }}
-            >
-              Partner Types
-            </span>
-            <h2 className="mt-3 text-3xl sm:text-4xl font-extrabold text-gray-900">
-              Who Are Our Distributors?
-            </h2>
-            <div
-              className="mt-3 mx-auto w-10 h-1 rounded-full"
-              style={{ backgroundColor: "#FF9500" }}
-            />
+            <FadeUp delay={0}>
+              <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#FF9500" }}>
+                Partner Types
+              </span>
+            </FadeUp>
+            <FadeUp delay={0.1}>
+              <h2 className="mt-3 text-3xl sm:text-4xl font-extrabold text-gray-900">
+                Who Are Our Distributors?
+              </h2>
+            </FadeUp>
+            <FadeUp delay={0.15}>
+              <div className="mt-3 mx-auto w-10 h-1 rounded-full" style={{ backgroundColor: "#FF9500" }} />
+            </FadeUp>
           </div>
 
+          {/* cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {partnerTypes.map((type) => {
+            {partnerTypes.map((type, i) => {
               const Icon = type.icon;
               return (
-                <div
-                  key={type.title}
-                  className="rounded-2xl p-6 flex flex-col items-center text-center gap-3"
-                  style={{ backgroundColor: "#F8F8F8" }}
-                >
+                <FadeUp key={type.title} delay={0.1 + i * 0.1}>
                   <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center"
-                    style={{ backgroundColor: "#FFF3E0" }}
+                    className="rounded-2xl p-6 flex flex-col items-center text-center gap-3 h-full"
+                    style={{ backgroundColor: "#F8F8F8" }}
                   >
-                    <Icon size={22} style={{ color: "#FF9500" }} />
+                    <div
+                      className="w-12 h-12 rounded-xl flex items-center justify-center"
+                      style={{ backgroundColor: "#FFF3E0" }}
+                    >
+                      <Icon size={22} style={{ color: "#FF9500" }} />
+                    </div>
+                    <h3 className="text-sm font-bold text-gray-900">{type.title}</h3>
+                    <p className="text-sm text-gray-500 leading-relaxed">{type.desc}</p>
                   </div>
-                  <h3 className="text-sm font-bold text-gray-900">{type.title}</h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">{type.desc}</p>
-                </div>
+                </FadeUp>
               );
             })}
           </div>
@@ -110,41 +160,44 @@ export default function DistributorSections() {
       {/* How to Become a Distributor */}
       <section className="py-20 px-6 bg-white">
         <div className="max-w-5xl mx-auto">
+
+          {/* heading */}
           <div className="text-center mb-12">
-            <span
-              className="text-xs font-bold uppercase tracking-widest"
-              style={{ color: "#FF9500" }}
-            >
-              Our Process
-            </span>
-            <h2 className="mt-3 text-3xl sm:text-4xl font-extrabold text-gray-900">
-              How to Become a Distributor
-            </h2>
-            <p className="mt-3 text-gray-500 text-sm sm:text-base max-w-md mx-auto">
-              Follow these seven steps to join our authorised distribution network and start making an impact in your community.
-            </p>
-            <div
-              className="mt-4 mx-auto w-10 h-1 rounded-full"
-              style={{ backgroundColor: "#FF9500" }}
-            />
+            <FadeUp delay={0}>
+              <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#FF9500" }}>
+                Our Process
+              </span>
+            </FadeUp>
+            <FadeUp delay={0.1}>
+              <h2 className="mt-3 text-3xl sm:text-4xl font-extrabold text-gray-900">
+                How to Become a Distributor
+              </h2>
+            </FadeUp>
+            <FadeUp delay={0.2}>
+              <p className="mt-3 text-gray-500 text-sm sm:text-base max-w-md mx-auto">
+                Follow these seven steps to join our authorised distribution network and start making an impact in your community.
+              </p>
+            </FadeUp>
+            <FadeUp delay={0.25}>
+              <div className="mt-4 mx-auto w-10 h-1 rounded-full" style={{ backgroundColor: "#FF9500" }} />
+            </FadeUp>
           </div>
 
+          {/* steps */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {steps.map((step) => (
-              <div
-                key={step.number}
-                className="rounded-2xl p-6 flex flex-col gap-2"
-                style={{ backgroundColor: "#F8F8F8" }}
-              >
-                <span
-                  className="text-3xl font-extrabold"
-                  style={{ color: "#FF950030" }}
+            {steps.map((step, i) => (
+              <FadeUp key={step.number} delay={0.1 + i * 0.08}>
+                <div
+                  className="rounded-2xl p-6 flex flex-col gap-2 h-full"
+                  style={{ backgroundColor: "#F8F8F8" }}
                 >
-                  {step.number}
-                </span>
-                <h3 className="text-sm font-bold text-gray-900">{step.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{step.desc}</p>
-              </div>
+                  <span className="text-3xl font-extrabold" style={{ color: "#FF950030" }}>
+                    {step.number}
+                  </span>
+                  <h3 className="text-sm font-bold text-gray-900">{step.title}</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">{step.desc}</p>
+                </div>
+              </FadeUp>
             ))}
           </div>
         </div>

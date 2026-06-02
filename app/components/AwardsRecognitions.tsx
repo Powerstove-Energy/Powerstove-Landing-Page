@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const awards = [
   { n: 1, name: "King Hamad Youth Empowerment Award for SDGs", sub: "Winner, US$20,000 — Bahrain", year: "2019", type: "Competition" },
@@ -18,26 +18,96 @@ const awards = [
 
 const filters = ["All", "2018", "2019", "2020", "2021", "Grant", "Competition"];
 
+function useInView(threshold = 0.15) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
+      { threshold }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [threshold]);
+  return { ref, visible };
+}
+
+function AwardCard({ award, index, animKey }: { award: typeof awards[0]; index: number; animKey: number }) {
+  const { ref, visible } = useInView(0.05);
+  return (
+    <div
+      ref={ref}
+      key={`${animKey}-${award.n}`}
+      className="rounded-xl border border-[#FF9500]/20 p-5 bg-white"
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0) scale(1)" : "translateY(30px) scale(0.97)",
+        transition: `opacity 0.5s ease ${index * 0.07}s, transform 0.5s ease ${index * 0.07}s`,
+      }}
+    >
+      <div className="flex items-start gap-3 mb-1">
+        <span className="w-7 h-7 rounded-full bg-[#FF9500] text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+          {award.n}
+        </span>
+        <p className="text-sm font-semibold text-gray-900 leading-snug">{award.name}</p>
+      </div>
+      <p className="text-xs text-gray-400 ml-10 mb-2">{award.sub}</p>
+      <span className="ml-10 inline-block text-xs text-gray-400 border border-[#FF9500]/20 rounded px-2 py-0.5">
+        {award.year}
+      </span>
+    </div>
+  );
+}
+
 export default function AwardsRecognitions() {
   const [active, setActive] = useState("All");
+  const [animKey, setAnimKey] = useState(0);
+  const { ref: headerRef, visible: headerVisible } = useInView(0.2);
+  const { ref: filtersRef, visible: filtersVisible } = useInView(0.1);
+  const { ref: btnRef, visible: btnVisible } = useInView(0.1);
 
   const filtered =
     active === "All"
       ? awards
       : awards.filter((a) => a.year === active || a.type === active);
 
+  function handleFilter(f: string) {
+    setActive(f);
+    setAnimKey((k) => k + 1);
+  }
+
   return (
     <section className="px-6 py-20 bg-white">
-      <h2 className="text-4xl font-extrabold text-center text-gray-900 mb-8">
-        Awards & Recognitions
-      </h2>
+
+      {/* Header */}
+      <div
+        ref={headerRef}
+        className="text-center mb-8"
+        style={{
+          opacity: headerVisible ? 1 : 0,
+          transform: headerVisible ? "translateY(0)" : "translateY(28px)",
+          transition: "opacity 0.7s ease, transform 0.7s ease",
+        }}
+      >
+        <h2 className="text-4xl font-extrabold text-gray-900">
+          Awards & Recognitions
+        </h2>
+      </div>
 
       {/* Filter tabs */}
-      <div className="flex flex-wrap justify-center gap-2 mb-10">
+      <div
+        ref={filtersRef}
+        className="flex flex-wrap justify-center gap-2 mb-10"
+        style={{
+          opacity: filtersVisible ? 1 : 0,
+          transform: filtersVisible ? "translateY(0)" : "translateY(20px)",
+          transition: "opacity 0.6s ease 0.15s, transform 0.6s ease 0.15s",
+        }}
+      >
         {filters.map((f) => (
           <button
             key={f}
-            onClick={() => setActive(f)}
+            onClick={() => handleFilter(f)}
             className={`px-5 py-1.5 rounded-full text-sm font-medium transition-all border ${
               active === f
                 ? "bg-[#FF9500] border-[#FF9500] text-white"
@@ -50,30 +120,22 @@ export default function AwardsRecognitions() {
       </div>
 
       {/* Awards grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
-        {filtered.map((award) => (
-          <div
-            key={award.n}
-            className="rounded-xl border border-[#FF9500]/20 p-5 bg-white"
-          >
-            <div className="flex items-start gap-3 mb-1">
-              <span className="w-7 h-7 rounded-full bg-[#FF9500] text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
-                {award.n}
-              </span>
-              <p className="text-sm font-semibold text-gray-900 leading-snug">
-                {award.name}
-              </p>
-            </div>
-            <p className="text-xs text-gray-400 ml-10 mb-2">{award.sub}</p>
-            <span className="ml-10 inline-block text-xs text-gray-400 border border-[#FF9500]/20 rounded px-2 py-0.5">
-              {award.year}
-            </span>
-          </div>
+      <div key={animKey} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
+        {filtered.map((award, index) => (
+          <AwardCard key={`${animKey}-${award.n}`} award={award} index={index} animKey={animKey} />
         ))}
       </div>
 
       {/* Show All button */}
-      <div className="flex justify-center mt-10">
+      <div
+        ref={btnRef}
+        className="flex justify-center mt-10"
+        style={{
+          opacity: btnVisible ? 1 : 0,
+          transform: btnVisible ? "translateY(0)" : "translateY(16px)",
+          transition: "opacity 0.6s ease 0.3s, transform 0.6s ease 0.3s",
+        }}
+      >
         <button className="px-8 py-2.5 rounded-md border border-[#FF9500] text-[#FF9500] text-sm font-semibold hover:bg-[#FF9500]/5 transition-colors">
           Show All Awards
         </button>
