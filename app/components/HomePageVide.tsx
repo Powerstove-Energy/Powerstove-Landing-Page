@@ -19,7 +19,7 @@ export default function HomePageVideo() {
       <div className="relative rounded-2xl overflow-hidden w-full h-64 sm:h-120">
         <video
           ref={videoRef}
-          src="/videos/homepage.mp4"
+          src="https://res.cloudinary.com/dacvwslvf/video/upload/v1780369089/Homepage_igdjtr.mp4"
           autoPlay
           muted
           loop
