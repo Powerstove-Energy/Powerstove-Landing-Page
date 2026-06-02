@@ -124,7 +124,7 @@ export default function ContactForm() {
             className="w-full border-b border-gray-200 py-2 text-sm text-gray-700 placeholder-gray-400 outline-none focus:border-[#FF9500] transition-colors bg-transparent resize-none"
           />
 
-          <button className="w-full bg-[#FF9500] hover:bg-[#e68600] transition-colors text-white font-semibold text-sm py-4 rounded-lg">
+          <button className="w-full bg-[#FF9500] hover:bg-[#e58602] transition-colors text-[#ffffff] font-semibold text-sm py-4 rounded-lg">
             Submit Message →
           </button>
         </div>

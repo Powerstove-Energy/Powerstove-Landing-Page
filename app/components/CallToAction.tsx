@@ -88,7 +88,7 @@ export default function CallToAction() {
             </p>
           </SlideIn>
 
-          {/* Right: Buttons */}
+          {/* Right: Buttons-- */}
           <SlideIn direction="right" delay={0.2} className="flex flex-wrap gap-3 shrink-0">
             <a
               href="/buy"
