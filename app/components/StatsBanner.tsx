@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 const stats = [
-  { value: 53625, suffix: "+", label: "Households Reached" },
+  { value: 1.5, suffix: " Million+", label: "Households Reached" },
   { value: 70, suffix: "%", label: "Fuel Savings" },
   { value: 50, prefix: "Up to ", suffix: "W", label: "Electricity Generated" },
   { value: 40, suffix: "+", label: "Global Awards" },
@@ -18,9 +18,8 @@ function useCountUp(target: number, duration = 2000, started: boolean) {
     const step = (timestamp: number) => {
       if (!startTime) startTime = timestamp;
       const progress = Math.min((timestamp - startTime) / duration, 1);
-      // ease out
       const eased = 1 - Math.pow(1 - progress, 3);
-      setCount(Math.floor(eased * target));
+      setCount(Math.round(eased * target * 10) / 10);
       if (progress < 1) requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
@@ -32,10 +31,14 @@ function useCountUp(target: number, duration = 2000, started: boolean) {
 function StatItem({ stat, started }: { stat: typeof stats[0]; started: boolean }) {
   const count = useCountUp(stat.value, 2000, started);
 
+  const formatted = Number.isInteger(stat.value)
+    ? count.toLocaleString()
+    : count.toFixed(1);
+
   return (
     <div className="flex flex-col items-center gap-1 text-center">
       <span className="text-3xl sm:text-4xl font-extrabold text-gray-900">
-        {stat.prefix ?? ""}{count.toLocaleString()}{stat.suffix}
+        {stat.prefix ?? ""}{formatted}{stat.suffix}
       </span>
       <div className="w-6 h-0.5 rounded-full" style={{ backgroundColor: "#FF9500" }} />
       <span className="text-sm text-gray-500 mt-1">{stat.label}</span>
