@@ -288,7 +288,7 @@ export default function Section() {
 
           <div className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-10">
             {[
-              { value: "53,625+", label: "Women & households reached" },
+              { value: "1.5 Million+", label: "Women & households reached" },
               { value: "70%", label: "Reduction in cooking fuel spend" },
               { value: "280,625", label: "Tonnes CO₂e mitigated per year" },
               { value: "3.4 MWh", label: "Electricity generated off-grid" },
