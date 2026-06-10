@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 const stats = [
-  { value: 53625, suffix: "+", label: "Households With Clean Cookstoves" },
+  { value: 1.5, suffix: "Million", label: "Households With Clean Cookstoves" },
   { value: 70, suffix: "%", label: "Fuel Savings Per Household" },
   { value: 280625, suffix: "", label: "Tonnes CO₂e Mitigated Yearly" },
   { value: 40, suffix: "+", label: "Global Awards & Grants" },
