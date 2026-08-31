@@ -3,6 +3,43 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Brand — pulled from the live site (#FF9500 is the dominant CTA/accent color). */
+  --primary: #ff9500;
+  --primary-foreground: #ffffff;
+  --ink: #1a1a1a;
+  --surface: #f8f8f8;
+  --surface-foreground: #1a1a1a;
+  --border: #e5e5e5;
+  --muted: #f1f1f1;
+  --muted-foreground: #6b7280;
+
+  /* Tone scale — badges, alerts. --warning is a yellow, not the brand orange, so
+     "pending" states don't visually collide with the CTA color used site-wide. */
+  --success: #16a34a;
+  --success-foreground: #ffffff;
+  --success-surface: #ecfdf3;
+  --warning: #ca8a04;
+  --warning-foreground: #1a1a1a;
+  --warning-surface: #fef9c3;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --destructive-surface: #fee2e2;
+  --info: #2563eb;
+  --info-foreground: #ffffff;
+  --info-surface: #eff6ff;
+
+  /* Semantic aliases — what agent-portal components actually reference. */
+  --status-kyc-pending: var(--warning);
+  --status-kyc-pending-surface: var(--warning-surface);
+  --status-kyc-verified: var(--success);
+  --status-kyc-verified-surface: var(--success-surface);
+  --status-kyc-failed: var(--destructive);
+  --status-kyc-failed-surface: var(--destructive-surface);
+  --status-payment-pending: var(--warning);
+  --status-payment-pending-surface: var(--warning-surface);
+  --status-payment-paid: var(--success);
+  --status-payment-paid-surface: var(--success-surface);
 }
 
 @theme inline {
@@ -10,6 +47,39 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-ink: var(--ink);
+  --color-surface: var(--surface);
+  --color-surface-foreground: var(--surface-foreground);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-surface: var(--success-surface);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-surface: var(--warning-surface);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-surface: var(--destructive-surface);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-surface: var(--info-surface);
+
+  --color-status-kyc-pending: var(--status-kyc-pending);
+  --color-status-kyc-pending-surface: var(--status-kyc-pending-surface);
+  --color-status-kyc-verified: var(--status-kyc-verified);
+  --color-status-kyc-verified-surface: var(--status-kyc-verified-surface);
+  --color-status-kyc-failed: var(--status-kyc-failed);
+  --color-status-kyc-failed-surface: var(--status-kyc-failed-surface);
+  --color-status-payment-pending: var(--status-payment-pending);
+  --color-status-payment-pending-surface: var(--status-payment-pending-surface);
+  --color-status-payment-paid: var(--status-payment-paid);
+  --color-status-payment-paid-surface: var(--status-payment-paid-surface);
 }
 
 html {
