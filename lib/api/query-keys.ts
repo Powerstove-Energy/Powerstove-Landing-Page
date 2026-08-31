@@ -4,13 +4,13 @@ export const queryKeys = {
   },
   customers: {
     all: () => ['customers'] as const,
-    list: (params: Record<string, unknown>) => ['customers', 'list', params] as const,
+    list: <T extends object>(params: T) => ['customers', 'list', params] as const,
     detail: (customerUuid: string) => ['customers', 'detail', customerUuid] as const,
     transactions: (customerUuid: string) => ['customers', customerUuid, 'transactions'] as const,
   },
   stoves: {
     models: () => ['stoves', 'models'] as const,
-    units: (params: Record<string, unknown>) => ['stoves', 'units', params] as const,
+    units: <T extends object>(params: T) => ['stoves', 'units', params] as const,
   },
   payments: {
     account: (customerUuid: string) => ['payments', 'account', customerUuid] as const,
