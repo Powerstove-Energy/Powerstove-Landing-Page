@@ -14,6 +14,17 @@ export interface ListCustomersParams {
   pageSize?: number;
 }
 
+export interface RegistrationTerms {
+  version: string;
+  text: string;
+}
+
+export async function getRegistrationTerms(): Promise<ServiceResult<RegistrationTerms>> {
+  return executeBackendService(() =>
+    backendRequest<RegistrationTerms>(API_ROUTES.customers.registrationTerms()),
+  );
+}
+
 export async function listCustomers(
   params: ListCustomersParams,
 ): Promise<ServiceResult<PaginatedResult<Customer>>> {
@@ -35,15 +46,23 @@ export async function createCustomer(input: CreateCustomerInput): Promise<Servic
     backendRequest<Customer>(API_ROUTES.customers.create(), {
       method: 'POST',
       body: {
+        registration_reference: input.registration_reference,
         nin: input.nin,
+        bvn: input.bvn || undefined,
         full_name: input.full_name,
         phone_number: input.phone_number,
         email: input.email || undefined,
-        address: input.address || undefined,
-        state: input.state || undefined,
-        lga: input.lga || undefined,
+        address: input.address,
+        state: input.state,
+        lga: input.lga,
         date_of_birth: input.date_of_birth || undefined,
-        gender: input.gender || undefined,
+        gender: input.gender,
+        stove_unit_uuid: input.stove_unit_uuid,
+        customer_photo: input.customer_photo,
+        stove_photo: input.stove_photo,
+        gps: input.gps,
+        signature: input.signature,
+        terms_version: input.terms_version,
       },
     }),
   );

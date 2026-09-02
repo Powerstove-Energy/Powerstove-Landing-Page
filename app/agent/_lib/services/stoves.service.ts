@@ -36,15 +36,3 @@ export async function listAvailableStoveUnits(stoveModelUuid: string): Promise<S
     ),
   );
 }
-
-export async function assignStoveUnit(
-  stoveUnitUuid: string,
-  customerUuid: string,
-): Promise<ServiceResult<StoveUnit>> {
-  return executeBackendService(() =>
-    backendRequest<StoveUnit>(API_ROUTES.stoves.assign(stoveUnitUuid), {
-      method: 'POST',
-      body: { customer_uuid: customerUuid },
-    }),
-  );
-}

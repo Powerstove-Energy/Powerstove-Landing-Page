@@ -9,7 +9,6 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { useCustomer, useCustomerTransactions } from '@/app/agent/_lib/hooks/use-customers';
 import { usePaymentAccount } from '@/app/agent/_lib/hooks/use-payments';
 import { KycStatus, PaymentTransactionStatus } from '@/app/agent/_lib/types';
-import { AssignStoveDialog } from './assign-stove-dialog';
 import { GeneratePaymentAccountDialog } from './generate-payment-account-dialog';
 
 function kycTone(status: KycStatus) {
@@ -101,17 +100,7 @@ export function CustomerDetailView({ customerUuid }: { customerUuid: string }) {
                 <StatusBadge tone="success">{customer.stove_unit.status}</StatusBadge>
               </div>
             ) : (
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">No stove assigned yet.</p>
-                <AssignStoveDialog
-                  customerUuid={customer.customer_uuid}
-                  trigger={
-                    <Button variant="secondary" size="sm">
-                      Assign stove
-                    </Button>
-                  }
-                />
-              </div>
+              <p className="text-sm text-muted-foreground">No stove assignment record is available.</p>
             )}
           </CardContent>
         </Card>

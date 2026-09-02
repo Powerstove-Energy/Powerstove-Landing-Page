@@ -8,6 +8,11 @@ export interface StoveUnitSummary {
   serial_number: string;
   status: StoveUnitStatus;
   assigned_at: string | null;
+  customer_photo_url: string | null;
+  stove_photo_url: string | null;
+  installation_latitude: number | null;
+  installation_longitude: number | null;
+  installation_captured_at: string | null;
   model: { stove_model_uuid: string; sku: string; name: string; category: string };
 }
 
@@ -35,6 +40,11 @@ export interface Customer {
   kyc_status: KycStatus;
   kyc_provider_reference: string | null;
   kyc_verified_at: string | null;
+  bvn_last4: string | null;
+  bvn_verified_at: string | null;
+  terms_version: string | null;
+  terms_accepted_at: string | null;
+  signature_image_url: string | null;
   created_at: string;
   updated_at: string;
   stove_unit: StoveUnitSummary | null;

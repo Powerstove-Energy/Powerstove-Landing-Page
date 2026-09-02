@@ -14,11 +14,29 @@ export interface NinLookupResult {
   provider_reference: string;
 }
 
+export interface BvnLookupResult {
+  bvn_last4: string;
+  full_name: string;
+  date_of_birth: string;
+  gender: string;
+  phone_number?: string;
+  provider_reference: string;
+}
+
 export async function lookupNin(nin: string): Promise<ServiceResult<NinLookupResult>> {
   return executeBackendService(() =>
     backendRequest<NinLookupResult>(API_ROUTES.kyc.lookupNin(), {
       method: 'POST',
       body: { nin },
+    }),
+  );
+}
+
+export async function lookupBvn(bvn: string): Promise<ServiceResult<BvnLookupResult>> {
+  return executeBackendService(() =>
+    backendRequest<BvnLookupResult>(API_ROUTES.kyc.lookupBvn(), {
+      method: 'POST',
+      body: { bvn },
     }),
   );
 }

@@ -6,6 +6,7 @@ import { unwrapServiceResult } from '@/lib/api/service-result';
 import { CreateCustomerInput } from '../schemas/customer.schema';
 import {
   createCustomer,
+  getRegistrationTerms,
   getCustomer,
   listCustomers,
   ListCustomersParams,
@@ -16,6 +17,14 @@ export function useCustomers(params: ListCustomersParams) {
   return useQuery({
     queryKey: queryKeys.customers.list(params),
     queryFn: async () => unwrapServiceResult(await listCustomers(params)),
+  });
+}
+
+export function useRegistrationTerms() {
+  return useQuery({
+    queryKey: ['customers', 'registration-terms'],
+    queryFn: async () => unwrapServiceResult(await getRegistrationTerms()),
+    staleTime: Infinity,
   });
 }
 

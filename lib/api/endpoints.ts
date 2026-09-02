@@ -14,10 +14,12 @@ export const API_ROUTES = {
   },
   kyc: {
     lookupNin: () => '/kyc/nin/lookup',
+    lookupBvn: () => '/kyc/bvn/lookup',
   },
   customers: {
     list: () => '/customers',
     create: () => '/customers',
+    registrationTerms: () => '/customers/registration-terms',
     detail: (customerUuid: string) => `/customers/${customerUuid}`,
     kycStatus: (customerUuid: string) => `/customers/${customerUuid}/kyc-status`,
     transactions: (customerUuid: string) => `/customers/${customerUuid}/transactions`,
@@ -25,7 +27,9 @@ export const API_ROUTES = {
   stoves: {
     models: () => '/stoves/models',
     units: () => '/stoves/units',
-    assign: (stoveUnitUuid: string) => `/stoves/units/${stoveUnitUuid}/assign`,
+  },
+  media: {
+    uploadSignature: () => '/media/upload-signature',
   },
   payments: {
     createAccount: () => '/payments/accounts',
