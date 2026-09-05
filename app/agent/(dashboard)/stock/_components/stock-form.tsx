@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAddStoveUnits, useAvailableStoveUnits, useStoveModels } from '@/app/agent/_lib/hooks/use-stoves';
 
@@ -15,6 +16,7 @@ const BATCH_SIZE = 1000;
 export function StockForm() {
   const [modelUuid, setModelUuid] = useState('');
   const [serials, setSerials] = useState('');
+  const [fileName, setFileName] = useState<string | null>(null);
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
 
   const models = useStoveModels();
@@ -24,7 +26,19 @@ export function StockForm() {
   const parseSerials = (value: string) =>
     [...new Set(value.split('\n').map((line) => line.trim()).filter((line) => line.length > 0))];
 
+  const serialCount = parseSerials(serials).length;
   const isSaving = addStoveUnits.isPending || progress !== null;
+
+  const readFile = async (file: File | null) => {
+    if (!file) return;
+    try {
+      const text = await file.text();
+      setSerials(text);
+      setFileName(file.name);
+    } catch {
+      toast.error('Could not read that file.');
+    }
+  };
 
   const submit = async () => {
     const serialNumbers = parseSerials(serials);
@@ -95,16 +109,20 @@ export function StockForm() {
 
           <div>
             <Label htmlFor="serials">Serial numbers</Label>
+            <div className="mt-1 mb-2 flex items-center gap-2">
+              <Input id="serials-file" type="file" accept=".txt,.csv,text/plain,text/csv" onChange={(event) => readFile(event.target.files?.[0] ?? null)} className="max-w-xs" />
+              {fileName ? <span className="text-xs text-muted-foreground">{fileName}</span> : null}
+            </div>
             <textarea
               id="serials"
               value={serials}
-              onChange={(event) => setSerials(event.target.value)}
+              onChange={(event) => { setSerials(event.target.value); setFileName(null); }}
               rows={8}
-              placeholder={'One serial number per line, e.g.\nPS-0001\nPS-0002'}
+              placeholder={'Type or paste one serial number per line, e.g.\nPS-0001\nPS-0002 — or pick a .txt/.csv file above.'}
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm font-mono"
             />
-            {parsedCount(serials) > 1 ? (
-              <p className="mt-1 text-xs text-muted-foreground">{parsedCount(serials).toLocaleString()} serial number(s) detected.</p>
+            {serialCount > 0 ? (
+              <p className="mt-1 text-xs text-muted-foreground">{serialCount.toLocaleString()} serial number(s) detected.</p>
             ) : null}
           </div>
 
@@ -119,7 +137,7 @@ export function StockForm() {
             </div>
           ) : null}
 
-          <Button type="button" onClick={submit} disabled={!modelUuid || serials.trim().length === 0} isLoading={isSaving}>
+          <Button type="button" onClick={submit} disabled={!modelUuid || serialCount === 0} isLoading={isSaving}>
             Add to inventory
           </Button>
         </CardContent>
@@ -156,8 +174,4 @@ export function StockForm() {
       </Card>
     </div>
   );
-}
-
-function parsedCount(value: string): number {
-  return new Set(value.split('\n').map((line) => line.trim()).filter(Boolean)).size;
 }
