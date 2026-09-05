@@ -36,3 +36,23 @@ export async function listAvailableStoveUnits(stoveModelUuid: string): Promise<S
     ),
   );
 }
+
+export interface AddStoveUnitsInput {
+  stove_model_uuid: string;
+  serial_numbers: string[];
+}
+
+export interface AddStoveUnitsResult {
+  requested: number;
+  created: number;
+  skipped: number;
+}
+
+export async function addStoveUnits(input: AddStoveUnitsInput): Promise<ServiceResult<AddStoveUnitsResult>> {
+  return executeBackendService(() =>
+    backendRequest<AddStoveUnitsResult>(API_ROUTES.stoves.unitsBulk(), {
+      method: 'POST',
+      body: { stove_model_uuid: input.stove_model_uuid, serial_numbers: input.serial_numbers },
+    }),
+  );
+}

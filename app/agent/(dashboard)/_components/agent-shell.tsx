@@ -7,6 +7,7 @@ import { LogoutButton } from './logout-button';
 const NAV_ITEMS = [
   { href: '/agent/dashboard', label: 'Dashboard' },
   { href: '/agent/customers', label: 'Customers' },
+  { href: '/agent/stock', label: 'Stock' },
 ];
 
 export function AgentShell({ agent, children }: { agent: SessionAgent; children: ReactNode }) {

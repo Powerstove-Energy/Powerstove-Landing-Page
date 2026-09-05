@@ -27,6 +27,7 @@ export const API_ROUTES = {
   stoves: {
     models: () => '/stoves/models',
     units: () => '/stoves/units',
+    unitsBulk: () => '/stoves/units/bulk',
   },
   media: {
     uploadSignature: () => '/media/upload-signature',
