@@ -36,10 +36,11 @@ export interface Customer {
   lga: string | null;
   date_of_birth: string | null;
   gender: string | null;
-  nin_last4: string;
+  nin_last4: string | null;
   kyc_status: KycStatus;
   kyc_provider_reference: string | null;
   kyc_verified_at: string | null;
+  verified_identifier: 'NIN' | 'BVN' | null;
   bvn_last4: string | null;
   bvn_verified_at: string | null;
   terms_version: string | null;

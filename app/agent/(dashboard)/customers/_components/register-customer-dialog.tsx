@@ -86,28 +86,32 @@ export function RegisterCustomerDialog({ trigger }: { trigger: ReactNode }) {
     setOpen(true);
   };
 
-  const verifyNin = async () => {
-    setNinError(null); setVerified(false);
-    if (!/^\d{11}$/.test(draft.nin)) { setNinError('NIN must be exactly 11 digits'); return; }
-    const result = await ninLookup.mutateAsync(draft.nin);
-    if (!result.success) { setNinError(result.error.message); return; }
-    const resultGender = result.data.gender.toLowerCase();
-    setDraft((current) => ({
-      ...current,
-      full_name: result.data.full_name,
-      date_of_birth: result.data.date_of_birth.slice(0, 10),
-      gender: isGender(resultGender) ? resultGender : current.gender,
-      phone_number: result.data.phone_number ?? current.phone_number,
-    }));
+  const verifyIdentity = async () => {
+    setNinError(null); setVerified(false); setBvnMessage(null);
+    const hasNin = /^\d{11}$/.test(draft.nin);
+    const hasBvn = /^\d{11}$/.test(draft.bvn);
+    if (!hasNin && !hasBvn) { setNinError('Enter a valid NIN or BVN to verify this customer'); return; }
+    const applyIdentity = (data: { full_name: string; date_of_birth: string; gender: string; phone_number?: string }) => {
+      const resultGender = data.gender.toLowerCase();
+      setDraft((current) => ({
+        ...current,
+        full_name: data.full_name,
+        date_of_birth: data.date_of_birth.slice(0, 10),
+        gender: isGender(resultGender) ? resultGender : current.gender,
+        phone_number: data.phone_number ?? current.phone_number,
+      }));
+    };
+    if (hasNin) {
+      const result = await ninLookup.mutateAsync(draft.nin);
+      if (!result.success) { setNinError(result.error.message); return; }
+      applyIdentity(result.data);
+    } else {
+      const result = await bvnLookup.mutateAsync(draft.bvn);
+      if (!result.success) { setNinError(result.error.message); return; }
+      setBvnMessage(`Verified with BVN for ${result.data.full_name}`);
+      applyIdentity(result.data);
+    }
     setVerified(true); setStep(2);
-  };
-
-  const verifyBvn = async () => {
-    setBvnMessage(null);
-    if (!draft.bvn) return;
-    if (!/^\d{11}$/.test(draft.bvn)) { setBvnMessage('BVN must be exactly 11 digits'); return; }
-    const result = await bvnLookup.mutateAsync(draft.bvn);
-    setBvnMessage(result.success ? `BVN verified for ${result.data.full_name}` : `BVN could not be verified: ${result.error.message}`);
   };
 
   const continueFromDetails = () => {
@@ -175,10 +179,12 @@ export function RegisterCustomerDialog({ trigger }: { trigger: ReactNode }) {
       <DialogContent className="max-w-2xl">
         <DialogHeader><DialogTitle>Register a customer</DialogTitle><DialogDescription>Step {step} of 4</DialogDescription></DialogHeader>
         {step === 1 ? <div className="space-y-4">
-          <div><Label htmlFor="nin">Customer NIN</Label><Input id="nin" inputMode="numeric" maxLength={11} value={draft.nin} onChange={(event) => setDraft((current) => ({ ...current, nin: event.target.value.replace(/\D/g, '') }))} placeholder="11-digit National ID Number" /></div>
-          <div><Label htmlFor="bvn">BVN (optional)</Label><div className="flex gap-2"><Input id="bvn" inputMode="numeric" maxLength={11} value={draft.bvn} onChange={(event) => setDraft((current) => ({ ...current, bvn: event.target.value.replace(/\D/g, '') }))} placeholder="11-digit Bank Verification Number" /><Button type="button" variant="secondary" onClick={verifyBvn} isLoading={bvnLookup.isPending}>Verify BVN</Button></div>{bvnMessage ? <p className="mt-2 text-xs text-muted-foreground">{bvnMessage}</p> : null}</div>
+          <p className="text-sm text-muted-foreground">Verify the customer with either their NIN or BVN. Enter at least one.</p>
+          <div><Label htmlFor="nin">Customer NIN (or BVN)</Label><Input id="nin" inputMode="numeric" maxLength={11} value={draft.nin} onChange={(event) => setDraft((current) => ({ ...current, nin: event.target.value.replace(/\D/g, '') }))} placeholder="11-digit National ID Number" /></div>
+          <div><Label htmlFor="bvn">Customer BVN (or NIN)</Label><Input id="bvn" inputMode="numeric" maxLength={11} value={draft.bvn} onChange={(event) => setDraft((current) => ({ ...current, bvn: event.target.value.replace(/\D/g, '') }))} placeholder="11-digit Bank Verification Number" /></div>
+          {bvnMessage ? <p className="text-sm text-success">{bvnMessage}</p> : null}
           {ninError ? <p role="alert" className="text-sm text-destructive">{ninError}</p> : null}
-          <div className="flex justify-end"><Button type="button" onClick={verifyNin} isLoading={ninLookup.isPending}>Verify identity</Button></div>
+          <div className="flex justify-end"><Button type="button" onClick={verifyIdentity} isLoading={ninLookup.isPending || bvnLookup.isPending}>Verify identity</Button></div>
         </div> : null}
         {step === 2 ? <div className="space-y-4">
           {verified ? <p className="rounded-lg bg-success-surface px-3 py-2 text-sm text-success">Identity verified — confirm the details and select the stove being delivered.</p> : null}

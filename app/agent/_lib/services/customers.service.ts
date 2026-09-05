@@ -47,7 +47,7 @@ export async function createCustomer(input: CreateCustomerInput): Promise<Servic
       method: 'POST',
       body: {
         registration_reference: input.registration_reference,
-        nin: input.nin,
+        nin: input.nin || undefined,
         bvn: input.bvn || undefined,
         full_name: input.full_name,
         phone_number: input.phone_number,
