@@ -1,5 +1,6 @@
 'use client';
 
+import { Check } from 'lucide-react';
 import { ReactNode, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -63,6 +64,7 @@ export function RegisterCustomerDialog({ trigger }: { trigger: ReactNode }) {
   const [bvnMessage, setBvnMessage] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [verified, setVerified] = useState(false);
+  const [completed, setCompleted] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
@@ -78,7 +80,7 @@ export function RegisterCustomerDialog({ trigger }: { trigger: ReactNode }) {
 
   const resetAndClose = () => {
     setOpen(false); setStep(1); setDraft(initialDraft()); setNinError(null); setBvnMessage(null);
-    setSubmitError(null); setVerified(false); setHasSignature(false);
+    setSubmitError(null); setVerified(false); setHasSignature(false); setCompleted(false);
   };
 
   const openDialog = () => {
@@ -165,7 +167,7 @@ export function RegisterCustomerDialog({ trigger }: { trigger: ReactNode }) {
         const paymentResult = await createPaymentAccount.mutateAsync(customerResult.data.customer_uuid);
         paymentResult.success ? toast.success('Payment account generated') : toast.error(`Payment account failed: ${paymentResult.error.message}`);
       }
-      resetAndClose();
+      setCompleted(true);
     } catch (error) {
       setSubmitError(messageFor(error, 'Registration could not be completed. Please try again.'));
     } finally { setIsUploading(false); }
@@ -173,11 +175,38 @@ export function RegisterCustomerDialog({ trigger }: { trigger: ReactNode }) {
 
   const isSaving = isUploading || createCustomer.isPending || createPaymentAccount.isPending;
 
+  const selectedModel = stoveModels.data?.find((m) => m.stove_model_uuid === draft.stove_model_uuid);
+  const selectedUnit = availableUnits.data?.find((u) => u.stove_unit_uuid === draft.stove_unit_uuid);
+  const identityLabel = draft.nin ? `NIN *****${draft.nin.slice(-4)}` : draft.bvn ? `BVN *****${draft.bvn.slice(-4)}` : '—';
+
+  const summaryRows: Array<{ label: string; value: string }> = [
+    { label: 'Full name', value: draft.full_name },
+    { label: 'Phone', value: draft.phone_number },
+    { label: 'Verified with', value: identityLabel },
+    { label: 'Address', value: `${draft.address}, ${draft.state} ${draft.lga}`.replace(/,\s*$/, '') },
+    { label: 'Stove', value: `${selectedModel?.name ?? ''} · ${selectedUnit?.serial_number ?? ''}`.trim() || '—' },
+    { label: 'Evidence', value: `${draft.customer_photo ? 'Customer photo' : ''}${draft.customer_photo && draft.stove_photo ? ', ' : ''}${draft.stove_photo ? 'stove photo' : ''}${draft.gps ? ', GPS' : ''}` },
+  ];
+
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => (nextOpen ? openDialog() : resetAndClose())}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="max-w-2xl">
-        <DialogHeader><DialogTitle>Register a customer</DialogTitle><DialogDescription>Step {step} of 4</DialogDescription></DialogHeader>
+        <DialogHeader><DialogTitle>Register a customer</DialogTitle><DialogDescription>Step {step} of 4</DialogDescription>
+          <div className="mt-2 flex items-center gap-1">
+            {['Identity', 'Details & stove', 'Evidence', 'Confirm'].map((label, index) => {
+              const n = index + 1;
+              const active = n === step;
+              const done = n < step;
+              return (
+                <div key={label} className="flex flex-1 flex-col gap-1">
+                  <div className={`h-1 rounded-full ${done ? 'bg-success' : active ? 'bg-ink' : 'bg-border'}`} />
+                  <span className={`text-[10px] ${active || done ? 'text-ink' : 'text-muted-foreground'}`}>{label}</span>
+                </div>
+              );
+            })}
+          </div>
+        </DialogHeader>
         {step === 1 ? <div className="space-y-4">
           <p className="text-sm text-muted-foreground">Verify the customer with either their NIN or BVN. Enter at least one.</p>
           <div><Label htmlFor="nin">Customer NIN (or BVN)</Label><Input id="nin" inputMode="numeric" maxLength={11} value={draft.nin} onChange={(event) => setDraft((current) => ({ ...current, nin: event.target.value.replace(/\D/g, '') }))} placeholder="11-digit National ID Number" /></div>
@@ -210,13 +239,42 @@ export function RegisterCustomerDialog({ trigger }: { trigger: ReactNode }) {
           {submitError ? <p role="alert" className="text-sm text-destructive">{submitError}</p> : null}
           <div className="flex justify-between"><Button type="button" variant="secondary" onClick={() => setStep(2)}>Back</Button><Button type="button" disabled={!draft.customer_photo || !draft.stove_photo || !draft.gps} onClick={() => { setSubmitError(null); setStep(4); }}>Continue</Button></div>
         </div> : null}
-        {step === 4 ? <div className="space-y-4">
-          <div className="rounded-lg border border-border bg-surface p-4"><p className="text-sm font-semibold text-ink">Customer consent</p>{registrationTerms.isLoading ? <p className="mt-2 text-sm text-muted-foreground">Loading consent…</p> : registrationTerms.data ? <p className="mt-2 text-sm leading-6 text-ink">{registrationTerms.data.text}</p> : <p role="alert" className="mt-2 text-sm text-destructive">The consent could not be loaded.</p>}</div>
-          <SignaturePad ref={signatureRef} onChange={setHasSignature} />
+        {!completed && step === 4 ? <div className="space-y-4">
+          <div className="rounded-lg border border-border bg-surface p-4">
+            <p className="text-sm font-semibold text-ink">Confirm &amp; sign</p>
+            <p className="mt-1 text-sm text-muted-foreground">Review the registration, then have the customer sign.</p>
+            <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
+              {summaryRows.map((row) => (
+                <div key={row.label} className="flex flex-col">
+                  <dt className="text-xs uppercase tracking-wide text-muted-foreground">{row.label}</dt>
+                  <dd className="text-sm font-medium text-ink">{row.value || '—'}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+
+          <div className="rounded-lg border border-border p-4">
+            <p className="text-sm font-semibold text-ink">Customer consent</p>
+            {registrationTerms.isLoading ? <p className="mt-2 text-sm text-muted-foreground">Loading consent…</p> : registrationTerms.data ? <p className="mt-2 text-sm leading-6 text-ink">{registrationTerms.data.text}</p> : <p role="alert" className="mt-2 text-sm text-destructive">The consent could not be loaded.</p>}
+            <div className="mt-4">
+              <SignaturePad ref={signatureRef} onChange={setHasSignature} />
+            </div>
+          </div>
+
           <label className="flex items-start gap-3 rounded-lg border border-border p-3"><input type="checkbox" checked={draft.accepted_terms} onChange={(event) => setDraft((current) => ({ ...current, accepted_terms: event.target.checked }))} className="mt-0.5 size-4" /><span className="text-sm text-ink">The customer has read and accepted this consent before signing.</span></label>
           <label className="flex items-start gap-3 rounded-lg border border-border p-3"><input type="checkbox" checked={draft.generate_payment_account} onChange={(event) => setDraft((current) => ({ ...current, generate_payment_account: event.target.checked }))} className="mt-0.5 size-4" /><span className="text-sm text-ink">Generate a payment account now.<span className="block text-muted-foreground">This is optional and can also be done later.</span></span></label>
           {submitError ? <p role="alert" className="text-sm text-destructive">{submitError}</p> : null}
-          <div className="flex justify-between"><Button type="button" variant="secondary" onClick={() => setStep(3)} disabled={isSaving}>Back</Button><Button type="button" onClick={submit} disabled={!draft.accepted_terms || !hasSignature || registrationTerms.isLoading || registrationTerms.isError} isLoading={isSaving}>Register customer</Button></div>
+          <div className="flex justify-between border-t border-border pt-4"><Button type="button" variant="secondary" onClick={() => setStep(3)} disabled={isSaving}>Back</Button><Button type="button" onClick={submit} disabled={!draft.accepted_terms || !hasSignature || registrationTerms.isLoading || registrationTerms.isError} isLoading={isSaving}>Register customer</Button></div>
+        </div> : null}
+        {completed ? <div className="space-y-4 text-center">
+          <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-success-surface text-success"><Check className="size-7" /></div>
+          <div>
+            <h2 className="text-lg font-semibold text-ink">Customer registered</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {selectedModel?.name ?? 'Stove'} · {selectedUnit?.serial_number ?? ''} has been assigned to {draft.full_name || 'the customer'}.
+            </p>
+          </div>
+          <Button type="button" onClick={resetAndClose}>Done</Button>
         </div> : null}
       </DialogContent>
     </Dialog>
