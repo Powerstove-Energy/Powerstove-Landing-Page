@@ -198,6 +198,9 @@ export function CustomerDetailView({ customerUuid }: { customerUuid: string }) {
             <Skeleton className="h-16 w-full" />
           ) : paymentAccount.data ? (
             <div className="space-y-1 text-sm text-ink">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                {paymentAccount.data.provider}
+              </p>
               <p className="font-medium">{paymentAccount.data.account_number}</p>
               <p className="text-muted-foreground">
                 {paymentAccount.data.account_name} · {paymentAccount.data.bank_name}

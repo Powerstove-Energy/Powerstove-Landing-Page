@@ -12,7 +12,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { useCreatePaymentAccount } from '@/app/agent/_lib/hooks/use-payments';
+import { PaymentMethod } from '@/app/agent/_lib/types';
+
+const PAYMENT_METHODS: Array<{ value: PaymentMethod; label: string }> = [
+  { value: 'paystack', label: 'Paystack — dedicated bank account' },
+  { value: 'embedly', label: 'Embedly (Sterling) — static account' },
+  { value: 'cash', label: 'Cash — collected in person' },
+];
 
 export function GeneratePaymentAccountDialog({
   customerUuid,
@@ -23,11 +31,12 @@ export function GeneratePaymentAccountDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('paystack');
   const createPaymentAccount = useCreatePaymentAccount();
 
   const handleConfirm = async () => {
     setError(null);
-    const result = await createPaymentAccount.mutateAsync(customerUuid);
+    const result = await createPaymentAccount.mutateAsync({ customerUuid, paymentMethod });
 
     if (!result.success) {
       setError(result.error.message);
@@ -45,11 +54,27 @@ export function GeneratePaymentAccountDialog({
         <DialogHeader>
           <DialogTitle>Generate a payment account</DialogTitle>
           <DialogDescription>
-            This creates a dedicated bank account number the customer can pay into at any time.
-            This is optional — only do this if the customer is ready to pay now or wants a
-            reusable account for later.
+            Choose how this customer pays. Paystack and Embedly issue a dedicated account
+            number the customer can pay into at any time. Cash is collected in the field and
+            recorded here. This is optional — you can do it later.
           </DialogDescription>
         </DialogHeader>
+        <div className="space-y-1">
+          <Label htmlFor="payment_method">Payment method</Label>
+          <select
+            id="payment_method"
+            className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm"
+            value={paymentMethod}
+            onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)}
+            disabled={createPaymentAccount.isPending}
+          >
+            {PAYMENT_METHODS.map((method) => (
+              <option key={method.value} value={method.value}>
+                {method.label}
+              </option>
+            ))}
+          </select>
+        </div>
         {error ? (
           <p role="alert" className="text-sm text-destructive">
             {error}

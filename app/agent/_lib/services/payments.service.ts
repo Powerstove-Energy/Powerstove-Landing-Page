@@ -4,7 +4,7 @@ import { API_ROUTES } from '@/lib/api/endpoints';
 import { backendRequest, BackendRequestError } from '@/lib/api/server-api-client';
 import { executeBackendService } from '@/lib/api/server-service';
 import { ServiceResult } from '@/lib/api/service-result';
-import { PaymentAccountSummary } from '../types';
+import { PaymentAccountSummary, PaymentMethod } from '../types';
 
 export async function getPaymentAccount(
   customerUuid: string,
@@ -24,11 +24,15 @@ export async function getPaymentAccount(
 
 export async function createPaymentAccount(
   customerUuid: string,
+  paymentMethod?: PaymentMethod,
 ): Promise<ServiceResult<PaymentAccountSummary>> {
   return executeBackendService(() =>
     backendRequest<PaymentAccountSummary>(API_ROUTES.payments.createAccount(), {
       method: 'POST',
-      body: { customer_uuid: customerUuid },
+      // Omit the field to let the backend apply its default (Paystack).
+      body: paymentMethod
+        ? { customer_uuid: customerUuid, payment_method: paymentMethod }
+        : { customer_uuid: customerUuid },
     }),
   );
 }

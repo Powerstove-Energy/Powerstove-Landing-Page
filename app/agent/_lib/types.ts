@@ -3,6 +3,9 @@ export type StoveUnitStatus = 'IN_STOCK' | 'ASSIGNED' | 'RETIRED';
 export type PaymentAccountStatus = 'ACTIVE' | 'INACTIVE';
 export type PaymentTransactionStatus = 'PENDING' | 'SUCCESS' | 'FAILED';
 
+/** How the customer pays. `cash` is collected in the field and only recorded here. */
+export type PaymentMethod = 'paystack' | 'embedly' | 'cash';
+
 export interface StoveUnitSummary {
   stove_unit_uuid: string;
   serial_number: string;
@@ -18,6 +21,7 @@ export interface StoveUnitSummary {
 
 export interface PaymentAccountSummary {
   payment_account_uuid: string;
+  provider: string;
   account_number: string;
   account_name: string;
   bank_name: string;

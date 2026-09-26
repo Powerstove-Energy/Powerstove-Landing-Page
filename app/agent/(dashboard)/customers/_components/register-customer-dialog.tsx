@@ -12,6 +12,7 @@ import { useBvnLookup, useNinLookup } from '@/app/agent/_lib/hooks/use-kyc';
 import { useCreatePaymentAccount } from '@/app/agent/_lib/hooks/use-payments';
 import { useAvailableStoveUnits, useStoveModels } from '@/app/agent/_lib/hooks/use-stoves';
 import { createCustomerSchema } from '@/app/agent/_lib/schemas/customer.schema';
+import { PaymentMethod } from '@/app/agent/_lib/types';
 import { uploadRegistrationAsset } from '@/app/agent/_lib/upload-registration-asset';
 import { SignaturePad, SignaturePadHandle } from './signature-pad';
 
@@ -36,6 +37,7 @@ interface RegistrationDraft {
   stove_photo: File | null;
   gps: { latitude: number; longitude: number } | null;
   generate_payment_account: boolean;
+  payment_method: PaymentMethod;
   accepted_terms: boolean;
 }
 
@@ -44,7 +46,7 @@ function initialDraft(): RegistrationDraft {
     registration_reference: '', nin: '', bvn: '', full_name: '', phone_number: '', email: '',
     address: '', state: '', lga: '', date_of_birth: '', gender: '', stove_model_uuid: '',
     stove_unit_uuid: '', customer_photo: null, stove_photo: null, gps: null,
-    generate_payment_account: false, accepted_terms: false,
+    generate_payment_account: false, payment_method: 'paystack', accepted_terms: false,
   };
 }
 
@@ -164,7 +166,10 @@ export function RegisterCustomerDialog({ trigger }: { trigger: ReactNode }) {
       if (!customerResult.success) { setSubmitError(customerResult.error.message); return; }
       toast.success('Customer registered and stove assigned');
       if (draft.generate_payment_account) {
-        const paymentResult = await createPaymentAccount.mutateAsync(customerResult.data.customer_uuid);
+        const paymentResult = await createPaymentAccount.mutateAsync({
+          customerUuid: customerResult.data.customer_uuid,
+          paymentMethod: draft.payment_method,
+        });
         paymentResult.success ? toast.success('Payment account generated') : toast.error(`Payment account failed: ${paymentResult.error.message}`);
       }
       setCompleted(true);
@@ -262,7 +267,22 @@ export function RegisterCustomerDialog({ trigger }: { trigger: ReactNode }) {
           </div>
 
           <label className="flex items-start gap-3 rounded-lg border border-border p-3"><input type="checkbox" checked={draft.accepted_terms} onChange={(event) => setDraft((current) => ({ ...current, accepted_terms: event.target.checked }))} className="mt-0.5 size-4" /><span className="text-sm text-ink">The customer has read and accepted this consent before signing.</span></label>
-          <label className="flex items-start gap-3 rounded-lg border border-border p-3"><input type="checkbox" checked={draft.generate_payment_account} onChange={(event) => setDraft((current) => ({ ...current, generate_payment_account: event.target.checked }))} className="mt-0.5 size-4" /><span className="text-sm text-ink">Generate a payment account now.<span className="block text-muted-foreground">This is optional and can also be done later.</span></span></label>
+          <div className="rounded-lg border border-border p-3">
+            <label className="flex items-start gap-3">
+              <input type="checkbox" checked={draft.generate_payment_account} onChange={(event) => setDraft((current) => ({ ...current, generate_payment_account: event.target.checked }))} className="mt-0.5 size-4" />
+              <span className="text-sm text-ink">Generate a payment account now.<span className="block text-muted-foreground">This is optional and can also be done later.</span></span>
+            </label>
+            {draft.generate_payment_account ? (
+              <div className="mt-3">
+                <Label htmlFor="payment_method">Payment method</Label>
+                <select id="payment_method" className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm" value={draft.payment_method} onChange={(event) => setDraft((current) => ({ ...current, payment_method: event.target.value as PaymentMethod }))}>
+                  <option value="paystack">Paystack — dedicated bank account</option>
+                  <option value="embedly">Embedly (Sterling) — static account</option>
+                  <option value="cash">Cash — collected in person</option>
+                </select>
+              </div>
+            ) : null}
+          </div>
           {submitError ? <p role="alert" className="text-sm text-destructive">{submitError}</p> : null}
           <div className="flex justify-between border-t border-border pt-4"><Button type="button" variant="secondary" onClick={() => setStep(3)} disabled={isSaving}>Back</Button><Button type="button" onClick={submit} disabled={!draft.accepted_terms || !hasSignature || registrationTerms.isLoading || registrationTerms.isError} isLoading={isSaving}>Register customer</Button></div>
         </div> : null}
