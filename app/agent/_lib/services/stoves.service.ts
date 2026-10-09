@@ -37,6 +37,15 @@ export async function listAvailableStoveUnits(stoveModelUuid: string): Promise<S
   );
 }
 
+/** In-stock units of any model whose serial starts with `prefix` (case-sensitive). */
+export async function searchInStockStoveUnits(prefix: string): Promise<ServiceResult<StoveUnit[]>> {
+  return executeBackendService(() =>
+    backendRequest<StoveUnit[]>(
+      `${API_ROUTES.stoves.units()}?status=IN_STOCK&serial_prefix=${encodeURIComponent(prefix)}`,
+    ),
+  );
+}
+
 export interface AddStoveUnitsInput {
   stove_model_uuid: string;
   serial_numbers: string[];
