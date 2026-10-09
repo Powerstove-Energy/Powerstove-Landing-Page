@@ -27,7 +27,13 @@ export const createCustomerSchema = z
     lga: z.string().trim().min(1, 'Enter the customer LGA').max(100),
     date_of_birth: z.string().optional().or(z.literal('')),
     gender: z.enum(['male', 'female', 'other']),
-    stove_unit_uuid: z.string().uuid('Select a stove unit'),
+    stove_model_uuid: z.string().uuid('Select a stove model'),
+    // Trimmed but never re-cased: serial numbers are case-sensitive.
+    serial_number: z
+      .string()
+      .trim()
+      .min(3, 'Enter the stove serial number')
+      .max(64, 'Serial number must be 64 characters or fewer'),
     customer_photo: claimedAssetSchema,
     stove_photo: claimedAssetSchema,
     gps: z.object({

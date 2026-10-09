@@ -1,7 +1,7 @@
 'use client';
 
 import { Check } from 'lucide-react';
-import { ReactNode, useRef, useState } from 'react';
+import { ReactNode, useDeferredValue, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { useCreateCustomer, useRegistrationTerms } from '@/app/agent/_lib/hooks/use-customers';
 import { useBvnLookup, useNinLookup } from '@/app/agent/_lib/hooks/use-kyc';
 import { useCreatePaymentAccount } from '@/app/agent/_lib/hooks/use-payments';
-import { useAvailableStoveUnits, useStoveModels } from '@/app/agent/_lib/hooks/use-stoves';
+import { useInStockSerialSearch, useStoveModels } from '@/app/agent/_lib/hooks/use-stoves';
 import { createCustomerSchema } from '@/app/agent/_lib/schemas/customer.schema';
 import { PAYMENT_METHOD_OPTIONS, PaymentMethod } from '@/app/agent/_lib/types';
 import { uploadRegistrationAsset } from '@/app/agent/_lib/upload-registration-asset';
@@ -32,7 +32,7 @@ interface RegistrationDraft {
   date_of_birth: string;
   gender: Gender;
   stove_model_uuid: string;
-  stove_unit_uuid: string;
+  serial_number: string;
   customer_photo: File | null;
   stove_photo: File | null;
   gps: { latitude: number; longitude: number } | null;
@@ -45,7 +45,7 @@ function initialDraft(): RegistrationDraft {
   return {
     registration_reference: '', nin: '', bvn: '', full_name: '', phone_number: '', email: '',
     address: '', state: '', lga: '', date_of_birth: '', gender: '', stove_model_uuid: '',
-    stove_unit_uuid: '', customer_photo: null, stove_photo: null, gps: null,
+    serial_number: '', customer_photo: null, stove_photo: null, gps: null,
     generate_payment_account: false, payment_method: 'paystack', accepted_terms: false,
   };
 }
@@ -78,7 +78,7 @@ export function RegisterCustomerDialog({ trigger }: { trigger: ReactNode }) {
   const createPaymentAccount = useCreatePaymentAccount();
   const registrationTerms = useRegistrationTerms();
   const stoveModels = useStoveModels();
-  const availableUnits = useAvailableStoveUnits(draft.stove_model_uuid || undefined);
+  const inStockUnits = useInStockSerialSearch(useDeferredValue(draft.serial_number.trim()));
 
   const resetAndClose = () => {
     setOpen(false); setStep(1); setDraft(initialDraft()); setNinError(null); setBvnMessage(null);
@@ -119,7 +119,7 @@ export function RegisterCustomerDialog({ trigger }: { trigger: ReactNode }) {
   };
 
   const continueFromDetails = () => {
-    if (!draft.full_name || !draft.phone_number || !draft.address || !draft.state || !draft.lga || !draft.gender || !draft.stove_unit_uuid) {
+    if (!draft.full_name || !draft.phone_number || !draft.address || !draft.state || !draft.lga || !draft.gender || !draft.stove_model_uuid || !draft.serial_number.trim()) {
       setSubmitError('Complete the required customer and stove details before continuing.');
       return;
     }
@@ -181,7 +181,9 @@ export function RegisterCustomerDialog({ trigger }: { trigger: ReactNode }) {
   const isSaving = isUploading || createCustomer.isPending || createPaymentAccount.isPending;
 
   const selectedModel = stoveModels.data?.find((m) => m.stove_model_uuid === draft.stove_model_uuid);
-  const selectedUnit = availableUnits.data?.find((u) => u.stove_unit_uuid === draft.stove_unit_uuid);
+  const serialNumber = draft.serial_number.trim();
+  // Exact match only — serial numbers are case-sensitive.
+  const stockedUnit = inStockUnits.data?.find((u) => u.serial_number === serialNumber);
   const identityLabel = draft.nin ? `NIN *****${draft.nin.slice(-4)}` : draft.bvn ? `BVN *****${draft.bvn.slice(-4)}` : '—';
 
   const summaryRows: Array<{ label: string; value: string }> = [
@@ -189,7 +191,7 @@ export function RegisterCustomerDialog({ trigger }: { trigger: ReactNode }) {
     { label: 'Phone', value: draft.phone_number },
     { label: 'Verified with', value: identityLabel },
     { label: 'Address', value: `${draft.address}, ${draft.state} ${draft.lga}`.replace(/,\s*$/, '') },
-    { label: 'Stove', value: `${selectedModel?.name ?? ''} · ${selectedUnit?.serial_number ?? ''}`.trim() || '—' },
+    { label: 'Stove', value: `${selectedModel?.name ?? ''} · ${serialNumber}`.trim() || '—' },
     { label: 'Evidence', value: `${draft.customer_photo ? 'Customer photo' : ''}${draft.customer_photo && draft.stove_photo ? ', ' : ''}${draft.stove_photo ? 'stove photo' : ''}${draft.gps ? ', GPS' : ''}` },
   ];
 
@@ -232,7 +234,7 @@ export function RegisterCustomerDialog({ trigger }: { trigger: ReactNode }) {
             <div><Label htmlFor="state">State</Label><Input id="state" value={draft.state} onChange={(event) => setDraft((current) => ({ ...current, state: event.target.value }))} /></div>
             <div><Label htmlFor="lga">LGA</Label><Input id="lga" value={draft.lga} onChange={(event) => setDraft((current) => ({ ...current, lga: event.target.value }))} /></div>
           </div>
-          <div className="border-t border-border pt-4"><p className="text-sm font-medium text-ink">Delivered stove</p><div className="mt-2 grid grid-cols-2 gap-4"><div><Label htmlFor="stove_model">Model</Label><select id="stove_model" className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm" value={draft.stove_model_uuid} onChange={(event) => setDraft((current) => ({ ...current, stove_model_uuid: event.target.value, stove_unit_uuid: '' }))}><option value="">Select a model</option>{stoveModels.data?.map((model) => <option key={model.stove_model_uuid} value={model.stove_model_uuid}>{model.name}</option>)}</select></div><div><Label htmlFor="stove_unit">Unit serial number</Label><select id="stove_unit" className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm disabled:opacity-50" disabled={!draft.stove_model_uuid} value={draft.stove_unit_uuid} onChange={(event) => setDraft((current) => ({ ...current, stove_unit_uuid: event.target.value }))}><option value="">Select a unit</option>{availableUnits.data?.map((unit) => <option key={unit.stove_unit_uuid} value={unit.stove_unit_uuid}>{unit.serial_number}</option>)}</select></div></div></div>
+          <div className="border-t border-border pt-4"><p className="text-sm font-medium text-ink">Delivered stove</p><div className="mt-2 grid grid-cols-2 gap-4"><div><Label htmlFor="stove_model">Model</Label><select id="stove_model" className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm" value={draft.stove_model_uuid} onChange={(event) => setDraft((current) => ({ ...current, stove_model_uuid: event.target.value }))}><option value="">Select a model</option>{stoveModels.data?.map((model) => <option key={model.stove_model_uuid} value={model.stove_model_uuid}>{model.name}</option>)}</select></div><div><Label htmlFor="serial_number">Serial number</Label><Input id="serial_number" list="in_stock_serials" autoComplete="off" autoCapitalize="off" spellCheck={false} placeholder="Pick from stock or type one" value={draft.serial_number} onChange={(event) => setDraft((current) => ({ ...current, serial_number: event.target.value }))} /><datalist id="in_stock_serials">{inStockUnits.data?.map((unit) => <option key={unit.stove_unit_uuid} value={unit.serial_number}>{unit.model.name}</option>)}</datalist></div></div><p className="mt-2 text-xs text-muted-foreground">{!serialNumber ? 'Any serial number can go with any model. Serial numbers are case-sensitive.' : stockedUnit ? (stockedUnit.stove_model_uuid === draft.stove_model_uuid || !draft.stove_model_uuid ? `In stock as ${stockedUnit.model.name}.` : `In stock as ${stockedUnit.model.name} — it will be recorded as ${selectedModel?.name ?? 'the selected model'}.`) : 'Not in stock — this serial will be added to inventory when you register.'}</p></div>
           {submitError ? <p role="alert" className="text-sm text-destructive">{submitError}</p> : null}
           <div className="flex justify-between"><Button type="button" variant="secondary" onClick={() => setStep(1)}>Back</Button><Button type="button" onClick={continueFromDetails}>Continue</Button></div>
         </div> : null}
@@ -291,7 +293,7 @@ export function RegisterCustomerDialog({ trigger }: { trigger: ReactNode }) {
           <div>
             <h2 className="text-lg font-semibold text-ink">Customer registered</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              {selectedModel?.name ?? 'Stove'} · {selectedUnit?.serial_number ?? ''} has been assigned to {draft.full_name || 'the customer'}.
+              {selectedModel?.name ?? 'Stove'} · {serialNumber} has been assigned to {draft.full_name || 'the customer'}.
             </p>
           </div>
           <Button type="button" onClick={resetAndClose}>Done</Button>
