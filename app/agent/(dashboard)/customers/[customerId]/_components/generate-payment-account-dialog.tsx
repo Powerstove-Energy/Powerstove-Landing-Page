@@ -14,13 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useCreatePaymentAccount } from '@/app/agent/_lib/hooks/use-payments';
-import { PaymentMethod } from '@/app/agent/_lib/types';
-
-const PAYMENT_METHODS: Array<{ value: PaymentMethod; label: string }> = [
-  { value: 'paystack', label: 'Paystack — dedicated bank account' },
-  { value: 'embedly', label: 'Embedly (Sterling) — static account' },
-  { value: 'cash', label: 'Cash — collected in person' },
-];
+import { PAYMENT_METHOD_OPTIONS, PaymentMethod } from '@/app/agent/_lib/types';
 
 export function GeneratePaymentAccountDialog({
   customerUuid,
@@ -54,7 +48,7 @@ export function GeneratePaymentAccountDialog({
         <DialogHeader>
           <DialogTitle>Generate a payment account</DialogTitle>
           <DialogDescription>
-            Choose how this customer pays. Paystack and Embedly issue a dedicated account
+            Choose how this customer pays. Paystack and Sterling Bank issue a dedicated account
             number the customer can pay into at any time. Cash is collected in the field and
             recorded here. This is optional — you can do it later.
           </DialogDescription>
@@ -68,7 +62,7 @@ export function GeneratePaymentAccountDialog({
             onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)}
             disabled={createPaymentAccount.isPending}
           >
-            {PAYMENT_METHODS.map((method) => (
+            {PAYMENT_METHOD_OPTIONS.map((method) => (
               <option key={method.value} value={method.value}>
                 {method.label}
               </option>

@@ -12,7 +12,7 @@ import { useBvnLookup, useNinLookup } from '@/app/agent/_lib/hooks/use-kyc';
 import { useCreatePaymentAccount } from '@/app/agent/_lib/hooks/use-payments';
 import { useAvailableStoveUnits, useStoveModels } from '@/app/agent/_lib/hooks/use-stoves';
 import { createCustomerSchema } from '@/app/agent/_lib/schemas/customer.schema';
-import { PaymentMethod } from '@/app/agent/_lib/types';
+import { PAYMENT_METHOD_OPTIONS, PaymentMethod } from '@/app/agent/_lib/types';
 import { uploadRegistrationAsset } from '@/app/agent/_lib/upload-registration-asset';
 import { SignaturePad, SignaturePadHandle } from './signature-pad';
 
@@ -276,9 +276,9 @@ export function RegisterCustomerDialog({ trigger }: { trigger: ReactNode }) {
               <div className="mt-3">
                 <Label htmlFor="payment_method">Payment method</Label>
                 <select id="payment_method" className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm" value={draft.payment_method} onChange={(event) => setDraft((current) => ({ ...current, payment_method: event.target.value as PaymentMethod }))}>
-                  <option value="paystack">Paystack — dedicated bank account</option>
-                  <option value="embedly">Embedly (Sterling) — static account</option>
-                  <option value="cash">Cash — collected in person</option>
+                  {PAYMENT_METHOD_OPTIONS.map((method) => (
+                    <option key={method.value} value={method.value}>{method.label}</option>
+                  ))}
                 </select>
               </div>
             ) : null}

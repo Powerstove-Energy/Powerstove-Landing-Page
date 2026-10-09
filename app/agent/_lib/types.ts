@@ -6,6 +6,23 @@ export type PaymentTransactionStatus = 'PENDING' | 'SUCCESS' | 'FAILED';
 /** How the customer pays. `cash` is collected in the field and only recorded here. */
 export type PaymentMethod = 'paystack' | 'embedly' | 'cash';
 
+/** Selectable payment methods. `embedly` is the API name for Sterling Bank. */
+export const PAYMENT_METHOD_OPTIONS: Array<{ value: PaymentMethod; label: string }> = [
+  { value: 'paystack', label: 'Paystack — dedicated bank account' },
+  { value: 'embedly', label: 'Sterling Bank — dedicated bank account' },
+  { value: 'cash', label: 'Cash — collected in person' },
+];
+
+const PAYMENT_PROVIDER_NAMES: Record<string, string> = {
+  paystack: 'Paystack',
+  embedly: 'Sterling Bank',
+  cash: 'Cash',
+};
+
+export function paymentProviderName(provider: string): string {
+  return PAYMENT_PROVIDER_NAMES[provider] ?? provider;
+}
+
 export interface StoveUnitSummary {
   stove_unit_uuid: string;
   serial_number: string;

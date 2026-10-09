@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { useCustomer, useCustomerTransactions, useRegistrationTerms } from '@/app/agent/_lib/hooks/use-customers';
 import { usePaymentAccount } from '@/app/agent/_lib/hooks/use-payments';
-import { KycStatus, PaymentTransactionStatus } from '@/app/agent/_lib/types';
+import { KycStatus, PaymentTransactionStatus, paymentProviderName } from '@/app/agent/_lib/types';
 import { GeneratePaymentAccountDialog } from './generate-payment-account-dialog';
 
 function kycTone(status: KycStatus) {
@@ -199,7 +199,7 @@ export function CustomerDetailView({ customerUuid }: { customerUuid: string }) {
           ) : paymentAccount.data ? (
             <div className="space-y-1 text-sm text-ink">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                {paymentAccount.data.provider}
+                {paymentProviderName(paymentAccount.data.provider)}
               </p>
               <p className="font-medium">{paymentAccount.data.account_number}</p>
               <p className="text-muted-foreground">
