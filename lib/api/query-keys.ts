@@ -18,4 +18,11 @@ export const queryKeys = {
   dashboard: {
     summary: () => ['dashboard', 'summary'] as const,
   },
+  auditor: {
+    summary: () => ['auditor', 'summary'] as const,
+    stoves: <T extends object>(params: T) => ['auditor', 'stoves', params] as const,
+    stove: (stoveUnitUuid: string) => ['auditor', 'stove', stoveUnitUuid] as const,
+    agents: <T extends object>(params: T) => ['auditor', 'agents', params] as const,
+    agent: (agentUuid: string) => ['auditor', 'agent', agentUuid] as const,
+  },
 } as const;

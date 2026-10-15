@@ -39,4 +39,13 @@ export const API_ROUTES = {
   dashboard: {
     summary: () => '/dashboard/summary',
   },
+  auditor: {
+    summary: () => '/auditor/summary',
+    stoves: () => '/auditor/stoves',
+    stovesExport: () => '/auditor/stoves/export',
+    stove: (stoveUnitUuid: string) => `/auditor/stoves/${stoveUnitUuid}`,
+    agents: () => '/auditor/agents',
+    agentsExport: () => '/auditor/agents/export',
+    agent: (agentUuid: string) => `/auditor/agents/${agentUuid}`,
+  },
 } as const;

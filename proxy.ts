@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { exchangeRefreshToken } from '@/lib/api/server-api-client';
 import { ACCESS_COOKIE_OPTIONS, AUTH_COOKIE } from '@/lib/auth/auth-cookies';
 
-const PROTECTED_PREFIXES = ['/agent/dashboard', '/agent/customers', '/agent/stock'];
+const PROTECTED_PREFIXES = ['/agent/dashboard', '/agent/customers', '/agent/stock', '/auditor'];
 
 /**
  * Fast cookie-presence redirect only — NOT the security boundary. The authoritative
@@ -40,5 +40,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/agent/dashboard/:path*', '/agent/customers/:path*', '/agent/stock/:path*'],
+  matcher: ['/agent/dashboard/:path*', '/agent/customers/:path*', '/agent/stock/:path*', '/auditor/:path*'],
 };
