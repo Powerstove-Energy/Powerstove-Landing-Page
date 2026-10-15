@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { NIGERIAN_STATES } from '../nigerian-states';
 
 export const ninSchema = z.string().regex(/^\d{11}$/, 'NIN must be exactly 11 digits');
 
@@ -22,7 +23,7 @@ const customerFieldsSchema = z.object({
   phone_number: z.string().regex(/^\+?[0-9]{7,15}$/, 'Enter a valid phone number'),
   email: z.string().email('Enter a valid email address').optional().or(z.literal('')),
   address: z.string().trim().min(1, 'Enter the customer address').max(255),
-  state: z.string().trim().min(1, 'Enter the customer state').max(100),
+  state: z.enum(NIGERIAN_STATES, { message: 'Select the customer state' }),
   lga: z.string().trim().min(1, 'Enter the customer LGA').max(100),
   date_of_birth: z
     .string()
