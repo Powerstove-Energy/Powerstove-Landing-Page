@@ -42,15 +42,15 @@ export async function getAccessToken(): Promise<string | undefined> {
  * against the backend (GET /agents/me), which itself re-checks the agent's live
  * status/token_version on every call, so a revoked session is rejected immediately.
  *
- * Known v1 limitation: no silent token refresh here (Next only allows setting cookies
- * from Server Actions/Route Handlers, not during Server Component render) — once the
- * 15-minute access token expires, the agent is redirected to log in again. If that
- * proves too tight in practice, raise JWT_ACCESS_EXPIRY in the backend's .env.
+ * An expired access token is renewed from the refresh cookie — by proxy.ts before the
+ * page renders, and by backendRequest() on a 401 — so agents stay signed in for the
+ * refresh token's lifetime (30 days) rather than the access token's 15 minutes.
  */
 export async function requireAgent(): Promise<SessionAgent> {
-  const accessToken = await getAccessToken();
+  const cookieStore = await cookies();
 
-  if (!accessToken) {
+  // A missing access cookie with a live refresh cookie is renewed inside backendRequest.
+  if (!cookieStore.has(AUTH_COOKIE.access) && !cookieStore.has(AUTH_COOKIE.refresh)) {
     redirect('/agent/login');
   }
 

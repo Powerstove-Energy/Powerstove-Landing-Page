@@ -5,7 +5,7 @@ const companyLinks = [
   { label: "About Us", href: "/about" },
   { label: "Products", href: "/products" },
   { label: "Partners & Recognition", href: "/partners" },
-  { label: "Contact Us", href: "/contact" },
+  { label: "Contact Us", href: "/contact-us" },
 ];
 
 const resourceLinks = [
@@ -15,6 +15,7 @@ const resourceLinks = [
   { label: "Newsroom", href: "/newsroom" },
   { label: "Hiring", href: "/hiring" },
   { label: "Distributors", href: "/distributor" },
+  { label: "Field Agent Login", href: "/agent/login" },
 ];
 
 const socialLinks = [

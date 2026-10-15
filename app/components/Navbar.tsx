@@ -85,7 +85,7 @@ export default function Navbar() {
                   )}
                   {dropdownOpen && (
                     <div className="absolute top-full left-0 mt-1 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
-                      {link.dropdown?.map((item: any) => (
+                      {link.dropdown?.map((item) => (
                         <Link
                           key={item.label}
                           href={item.href}
@@ -122,7 +122,13 @@ export default function Navbar() {
           </div>
 
           {/* Desktop CTA Button */}
-          <div className="hidden lg:block">
+          <div className="hidden lg:flex items-center gap-4">
+            <Link
+              href="/agent/login"
+              className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors duration-150"
+            >
+              Agent Login
+            </Link>
             <Link
               href="/buy"
               className="inline-flex items-center px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 active:scale-95"
@@ -183,6 +189,13 @@ export default function Navbar() {
                 ))}
             </div>
           ))}
+          <Link
+            href="/agent/login"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+          >
+            Agent Login
+          </Link>
           <div className="pt-2">
             <Link
               href="/buy"

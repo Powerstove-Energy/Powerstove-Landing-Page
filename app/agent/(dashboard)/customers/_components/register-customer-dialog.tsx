@@ -11,7 +11,7 @@ import { useCreateCustomer, useRegistrationTerms } from '@/app/agent/_lib/hooks/
 import { useBvnLookup, useNinLookup } from '@/app/agent/_lib/hooks/use-kyc';
 import { useCreatePaymentAccount } from '@/app/agent/_lib/hooks/use-payments';
 import { useInStockSerialSearch, useStoveModels } from '@/app/agent/_lib/hooks/use-stoves';
-import { createCustomerSchema } from '@/app/agent/_lib/schemas/customer.schema';
+import { createCustomerSchema, customerDetailsSchema } from '@/app/agent/_lib/schemas/customer.schema';
 import { PAYMENT_METHOD_OPTIONS, PaymentMethod } from '@/app/agent/_lib/types';
 import { uploadRegistrationAsset } from '@/app/agent/_lib/upload-registration-asset';
 import { SignaturePad, SignaturePadHandle } from './signature-pad';
@@ -95,32 +95,40 @@ export function RegisterCustomerDialog({ trigger }: { trigger: ReactNode }) {
     const hasNin = /^\d{11}$/.test(draft.nin);
     const hasBvn = /^\d{11}$/.test(draft.bvn);
     if (!hasNin && !hasBvn) { setNinError('Enter a valid NIN or BVN to verify this customer'); return; }
+    if ((draft.nin && !hasNin) || (draft.bvn && !hasBvn)) { setNinError('NIN and BVN must each be exactly 11 digits'); return; }
     const applyIdentity = (data: { full_name: string; date_of_birth: string; gender: string; phone_number?: string }) => {
       const resultGender = data.gender.toLowerCase();
+      const dateOfBirth = data.date_of_birth.slice(0, 10);
       setDraft((current) => ({
         ...current,
         full_name: data.full_name,
-        date_of_birth: data.date_of_birth.slice(0, 10),
+        date_of_birth: /^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth) ? dateOfBirth : current.date_of_birth,
         gender: isGender(resultGender) ? resultGender : current.gender,
-        phone_number: data.phone_number ?? current.phone_number,
+        phone_number: data.phone_number ? data.phone_number.replace(/[^\d+]/g, '') : current.phone_number,
       }));
     };
-    if (hasNin) {
-      const result = await ninLookup.mutateAsync(draft.nin);
-      if (!result.success) { setNinError(result.error.message); return; }
-      applyIdentity(result.data);
-    } else {
-      const result = await bvnLookup.mutateAsync(draft.bvn);
-      if (!result.success) { setNinError(result.error.message); return; }
-      setBvnMessage(`Verified with BVN for ${result.data.full_name}`);
-      applyIdentity(result.data);
+    try {
+      // Every identifier entered is verified — an unchecked one would still be saved against this customer.
+      const [ninResult, bvnResult] = await Promise.all([
+        hasNin ? ninLookup.mutateAsync(draft.nin) : null,
+        hasBvn ? bvnLookup.mutateAsync(draft.bvn) : null,
+      ]);
+      if (ninResult && !ninResult.success) { setNinError(`NIN: ${ninResult.error.message}`); return; }
+      if (bvnResult && !bvnResult.success) { setNinError(`BVN: ${bvnResult.error.message}`); return; }
+      if (bvnResult?.success) setBvnMessage(`Verified with BVN for ${bvnResult.data.full_name}`);
+      const identity = ninResult?.success ? ninResult.data : bvnResult?.success ? bvnResult.data : null;
+      if (identity) applyIdentity(identity);
+    } catch (error) {
+      setNinError(messageFor(error, 'Could not reach the verification service. Check your connection and try again.'));
+      return;
     }
     setVerified(true); setStep(2);
   };
 
   const continueFromDetails = () => {
-    if (!draft.full_name || !draft.phone_number || !draft.address || !draft.state || !draft.lga || !draft.gender || !draft.stove_model_uuid || !draft.serial_number.trim()) {
-      setSubmitError('Complete the required customer and stove details before continuing.');
+    const parsed = customerDetailsSchema.safeParse(draft);
+    if (!parsed.success) {
+      setSubmitError(parsed.error.issues[0]?.message ?? 'Complete the required customer and stove details before continuing.');
       return;
     }
     setSubmitError(null); setStep(3);
@@ -170,7 +178,8 @@ export function RegisterCustomerDialog({ trigger }: { trigger: ReactNode }) {
           customerUuid: customerResult.data.customer_uuid,
           paymentMethod: draft.payment_method,
         });
-        paymentResult.success ? toast.success('Payment account generated') : toast.error(`Payment account failed: ${paymentResult.error.message}`);
+        if (paymentResult.success) toast.success('Payment account generated');
+        else toast.error(`Payment account failed: ${paymentResult.error.message}`);
       }
       setCompleted(true);
     } catch (error) {
@@ -224,17 +233,17 @@ export function RegisterCustomerDialog({ trigger }: { trigger: ReactNode }) {
         </div> : null}
         {step === 2 ? <div className="space-y-4">
           {verified ? <p className="rounded-lg bg-success-surface px-3 py-2 text-sm text-success">Identity verified — confirm the details and select the stove being delivered.</p> : null}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2"><Label htmlFor="full_name">Full name</Label><Input id="full_name" value={draft.full_name} onChange={(event) => setDraft((current) => ({ ...current, full_name: event.target.value }))} /></div>
-            <div><Label htmlFor="phone_number">Phone number</Label><Input id="phone_number" value={draft.phone_number} onChange={(event) => setDraft((current) => ({ ...current, phone_number: event.target.value }))} /></div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2"><Label htmlFor="full_name">Full name</Label><Input id="full_name" value={draft.full_name} onChange={(event) => setDraft((current) => ({ ...current, full_name: event.target.value }))} /></div>
+            <div><Label htmlFor="phone_number">Phone number</Label><Input id="phone_number" type="tel" inputMode="tel" value={draft.phone_number} onChange={(event) => setDraft((current) => ({ ...current, phone_number: event.target.value }))} /></div>
             <div><Label htmlFor="email">Email (optional)</Label><Input id="email" type="email" value={draft.email} onChange={(event) => setDraft((current) => ({ ...current, email: event.target.value }))} /></div>
             <div><Label htmlFor="date_of_birth">Date of birth (optional)</Label><Input id="date_of_birth" type="date" value={draft.date_of_birth} onChange={(event) => setDraft((current) => ({ ...current, date_of_birth: event.target.value }))} /></div>
             <div><Label htmlFor="gender">Gender</Label><select id="gender" className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm" value={draft.gender} onChange={(event) => setDraft((current) => ({ ...current, gender: event.target.value as Gender }))}><option value="">Select</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select></div>
-            <div className="col-span-2"><Label htmlFor="address">Address</Label><Input id="address" value={draft.address} onChange={(event) => setDraft((current) => ({ ...current, address: event.target.value }))} /></div>
+            <div className="sm:col-span-2"><Label htmlFor="address">Address</Label><Input id="address" value={draft.address} onChange={(event) => setDraft((current) => ({ ...current, address: event.target.value }))} /></div>
             <div><Label htmlFor="state">State</Label><Input id="state" value={draft.state} onChange={(event) => setDraft((current) => ({ ...current, state: event.target.value }))} /></div>
             <div><Label htmlFor="lga">LGA</Label><Input id="lga" value={draft.lga} onChange={(event) => setDraft((current) => ({ ...current, lga: event.target.value }))} /></div>
           </div>
-          <div className="border-t border-border pt-4"><p className="text-sm font-medium text-ink">Delivered stove</p><div className="mt-2 grid grid-cols-2 gap-4"><div><Label htmlFor="stove_model">Model</Label><select id="stove_model" className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm" value={draft.stove_model_uuid} onChange={(event) => setDraft((current) => ({ ...current, stove_model_uuid: event.target.value }))}><option value="">Select a model</option>{stoveModels.data?.map((model) => <option key={model.stove_model_uuid} value={model.stove_model_uuid}>{model.name}</option>)}</select></div><div><Label htmlFor="serial_number">Serial number</Label><Input id="serial_number" list="in_stock_serials" autoComplete="off" autoCapitalize="off" spellCheck={false} placeholder="Pick from stock or type one" value={draft.serial_number} onChange={(event) => setDraft((current) => ({ ...current, serial_number: event.target.value }))} /><datalist id="in_stock_serials">{inStockUnits.data?.map((unit) => <option key={unit.stove_unit_uuid} value={unit.serial_number}>{unit.model.name}</option>)}</datalist></div></div><p className="mt-2 text-xs text-muted-foreground">{!serialNumber ? 'Any serial number can go with any model. Serial numbers are case-sensitive.' : stockedUnit ? (stockedUnit.stove_model_uuid === draft.stove_model_uuid || !draft.stove_model_uuid ? `In stock as ${stockedUnit.model.name}.` : `In stock as ${stockedUnit.model.name} — it will be recorded as ${selectedModel?.name ?? 'the selected model'}.`) : 'Not in stock — this serial will be added to inventory when you register.'}</p></div>
+          <div className="border-t border-border pt-4"><p className="text-sm font-medium text-ink">Delivered stove</p><div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2"><div><Label htmlFor="stove_model">Model</Label><select id="stove_model" className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm" value={draft.stove_model_uuid} onChange={(event) => setDraft((current) => ({ ...current, stove_model_uuid: event.target.value }))}><option value="">Select a model</option>{stoveModels.data?.map((model) => <option key={model.stove_model_uuid} value={model.stove_model_uuid}>{model.name}</option>)}</select></div><div><Label htmlFor="serial_number">Serial number</Label><Input id="serial_number" list="in_stock_serials" autoComplete="off" autoCapitalize="off" spellCheck={false} placeholder="Pick from stock or type one" value={draft.serial_number} onChange={(event) => setDraft((current) => ({ ...current, serial_number: event.target.value }))} /><datalist id="in_stock_serials">{inStockUnits.data?.map((unit) => <option key={unit.stove_unit_uuid} value={unit.serial_number}>{unit.model.name}</option>)}</datalist></div></div><p className="mt-2 text-xs text-muted-foreground">{!serialNumber ? 'Any serial number can go with any model. Serial numbers are case-sensitive.' : stockedUnit ? (stockedUnit.stove_model_uuid === draft.stove_model_uuid || !draft.stove_model_uuid ? `In stock as ${stockedUnit.model.name}.` : `In stock as ${stockedUnit.model.name} — it will be recorded as ${selectedModel?.name ?? 'the selected model'}.`) : 'Not in stock — this serial will be added to inventory when you register.'}</p></div>
           {submitError ? <p role="alert" className="text-sm text-destructive">{submitError}</p> : null}
           <div className="flex justify-between"><Button type="button" variant="secondary" onClick={() => setStep(1)}>Back</Button><Button type="button" onClick={continueFromDetails}>Continue</Button></div>
         </div> : null}
