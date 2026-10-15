@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PasswordInput } from '@/components/ui/password-input';
+import { HOME_FOR_ROLE } from '@/lib/auth/roles';
 import { loginSchema } from '../../_lib/schemas/auth.schema';
 import { loginAgent } from '../../_lib/services/auth.service';
 
@@ -37,7 +38,7 @@ export function LoginForm() {
     }
 
     toast.success('Welcome back');
-    router.push('/agent/dashboard');
+    router.push(HOME_FOR_ROLE[result.data.role]);
     router.refresh();
   };
 

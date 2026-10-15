@@ -4,6 +4,7 @@ import { API_ROUTES } from '@/lib/api/endpoints';
 import { backendRequest } from '@/lib/api/server-api-client';
 import { executeBackendService } from '@/lib/api/server-service';
 import { ServiceResult } from '@/lib/api/service-result';
+import { AccountRole } from '@/lib/auth/roles';
 import { clearAuthCookies, setAuthCookies } from '@/lib/auth/session';
 import { LoginInput, RegisterInput } from '../schemas/auth.schema';
 
@@ -27,7 +28,21 @@ export async function registerAgent(input: RegisterInput): Promise<ServiceResult
   );
 }
 
-export async function loginAgent(input: LoginInput): Promise<ServiceResult<{ message: string }>> {
+/** Reads the role claim for routing only — the backend re-verifies the token on every call. */
+function roleFromAccessToken(accessToken: string): AccountRole {
+  try {
+    const payload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64url').toString()) as {
+      role?: string;
+    };
+    return payload.role === 'AUDITOR' ? 'AUDITOR' : 'AGENT';
+  } catch {
+    return 'AGENT';
+  }
+}
+
+export async function loginAgent(
+  input: LoginInput,
+): Promise<ServiceResult<{ message: string; role: AccountRole }>> {
   return executeBackendService(async () => {
     const tokens = await backendRequest<AuthTokens>(API_ROUTES.auth.login(), {
       method: 'POST',
@@ -36,7 +51,7 @@ export async function loginAgent(input: LoginInput): Promise<ServiceResult<{ mes
     });
 
     await setAuthCookies(tokens);
-    return { message: 'Login successful' };
+    return { message: 'Login successful', role: roleFromAccessToken(tokens.access_token) };
   });
 }
 

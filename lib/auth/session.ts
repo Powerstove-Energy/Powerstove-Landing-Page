@@ -2,13 +2,14 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { backendRequest, BackendRequestError } from '../api/server-api-client';
 import { ACCESS_COOKIE_OPTIONS, AUTH_COOKIE, REFRESH_COOKIE_OPTIONS } from './auth-cookies';
+import { AccountRole, HOME_FOR_ROLE } from './roles';
 
 export interface SessionAgent {
   agent_uuid: string;
   full_name: string;
   email: string;
   phone_number: string | null;
-  role: string;
+  role: AccountRole;
   status: string;
   email_verified_at: string | null;
   created_at: string;
@@ -46,7 +47,7 @@ export async function getAccessToken(): Promise<string | undefined> {
  * page renders, and by backendRequest() on a 401 — so agents stay signed in for the
  * refresh token's lifetime (30 days) rather than the access token's 15 minutes.
  */
-export async function requireAgent(): Promise<SessionAgent> {
+async function requireSession(): Promise<SessionAgent> {
   const cookieStore = await cookies();
 
   // A missing access cookie with a live refresh cookie is renewed inside backendRequest.
@@ -62,4 +63,18 @@ export async function requireAgent(): Promise<SessionAgent> {
     }
     redirect('/agent/login');
   }
+}
+
+/** Gate for the field-agent portal. Auditors are sent to their own dashboard. */
+export async function requireAgent(): Promise<SessionAgent> {
+  const session = await requireSession();
+  if (session.role !== 'AGENT') redirect(HOME_FOR_ROLE[session.role] ?? '/agent/login');
+  return session;
+}
+
+/** Gate for the read-only auditor dashboard. Field agents are sent to their own portal. */
+export async function requireAuditor(): Promise<SessionAgent> {
+  const session = await requireSession();
+  if (session.role !== 'AUDITOR') redirect(HOME_FOR_ROLE[session.role] ?? '/agent/login');
+  return session;
 }

@@ -6,7 +6,7 @@ export default function LoginPage() {
     <div>
       <h1 className="text-xl font-semibold text-ink">Agent sign in</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Sign in to register customers and manage payments.
+        Sign in to register customers and manage payments. Auditors sign in here too.
       </p>
       <LoginForm />
       <p className="mt-6 text-center text-sm text-muted-foreground">
