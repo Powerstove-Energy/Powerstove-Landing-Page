@@ -28,6 +28,10 @@ export const API_ROUTES = {
     models: () => '/stoves/models',
     units: () => '/stoves/units',
     unitsBulk: () => '/stoves/units/bulk',
+    nextSerial: () => '/stoves/next-serial',
+  },
+  locations: {
+    list: () => '/locations',
   },
   media: {
     uploadSignature: () => '/media/upload-signature',

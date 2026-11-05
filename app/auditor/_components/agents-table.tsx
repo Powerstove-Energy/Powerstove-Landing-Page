@@ -18,7 +18,6 @@ const COLUMNS: Array<[string, boolean]> = [
   ['Joined', false],
   ['Stoves', true],
   ['KYC verified', true],
-  ['Payment accounts', true],
   ['Last registration', false],
   ['Areas', false],
   ['Review', false],
@@ -126,7 +125,6 @@ export function AgentsTable() {
                   <td className="whitespace-nowrap px-4 py-3 tabular-nums text-muted-foreground">{formatDate(agent.created_at)}</td>
                   <td className="px-4 py-3 text-right tabular-nums text-ink">{agent.stoves_registered}</td>
                   <td className="px-4 py-3 text-right tabular-nums text-ink">{formatPercent(agent.kyc_verified_pct)}</td>
-                  <td className="px-4 py-3 text-right tabular-nums text-ink">{formatPercent(agent.payment_account_pct)}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
                     {agent.last_registration_at ? daysAgo(agent.last_registration_at) : 'No registrations'}
                   </td>

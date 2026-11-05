@@ -46,7 +46,6 @@ export function AgentRecord({ agentUuid }: { agentUuid: string }) {
               ['Joined', formatDate(agent.created_at)],
               ['Areas', agent.states.length ? agent.states.join(', ') : '—'],
               ['Last registration', agent.last_registration_at ? formatDateTime(agent.last_registration_at) : 'None yet'],
-              ['Payment accounts', agent.payment_account_pct === null ? '—' : `${agent.payment_account_pct}% of customers`],
             ]}
           />
         </RecordSection>

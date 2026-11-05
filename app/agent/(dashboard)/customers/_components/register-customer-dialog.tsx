@@ -9,16 +9,33 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCreateCustomer, useRegistrationTerms } from '@/app/agent/_lib/hooks/use-customers';
 import { useBvnLookup, useNinLookup } from '@/app/agent/_lib/hooks/use-kyc';
+import { useStateLocations } from '@/app/agent/_lib/hooks/use-locations';
 import { useCreatePaymentAccount } from '@/app/agent/_lib/hooks/use-payments';
-import { useInStockSerialSearch, useStoveModels } from '@/app/agent/_lib/hooks/use-stoves';
+import { useInStockSerialSearch, useNextSerial, useStoveModels } from '@/app/agent/_lib/hooks/use-stoves';
 import { createCustomerSchema, customerDetailsSchema } from '@/app/agent/_lib/schemas/customer.schema';
-import { NIGERIAN_STATES } from '@/app/agent/_lib/nigerian-states';
+import { matchPlace, matchState, NIGERIAN_STATES } from '@/app/agent/_lib/nigerian-states';
 import { PAYMENT_METHOD_OPTIONS, PaymentMethod } from '@/app/agent/_lib/types';
 import { uploadRegistrationAsset } from '@/app/agent/_lib/upload-registration-asset';
 import { SignaturePad, SignaturePadHandle } from './signature-pad';
 
 type Step = 1 | 2 | 3 | 4;
 type Gender = '' | 'male' | 'female' | 'other';
+type HouseholdGroup = 'household_children_0_14' | 'household_females_15_plus' | 'household_males_15_59' | 'household_males_60_plus';
+type PhotoKey = 'id_photo' | 'baseline_stove_photo' | 'customer_photo';
+
+/** The standard adult-equivalent age groups. */
+const HOUSEHOLD_GROUPS: Array<{ key: HouseholdGroup; label: string }> = [
+  { key: 'household_children_0_14', label: 'Children (0–14)' },
+  { key: 'household_females_15_plus', label: 'Females (15 and over)' },
+  { key: 'household_males_15_59', label: 'Males (15–59)' },
+  { key: 'household_males_60_plus', label: 'Males (60 and over)' },
+];
+
+const PHOTOS: Array<{ key: PhotoKey; label: string; hint: string }> = [
+  { key: 'id_photo', label: 'Government ID photo', hint: 'The ID card the customer showed you, with the details readable.' },
+  { key: 'baseline_stove_photo', label: 'Old (baseline) stove photo', hint: 'The stove or fire the household cooked on before this one.' },
+  { key: 'customer_photo', label: 'Customer with the new stove', hint: 'The customer standing next to the new stove at their home.' },
+];
 
 interface RegistrationDraft {
   registration_reference: string;
@@ -30,12 +47,19 @@ interface RegistrationDraft {
   address: string;
   state: string;
   lga: string;
+  ward: string;
   date_of_birth: string;
   gender: Gender;
+  // Kept as typed so an empty box stays empty; converted to numbers when checked.
+  household_children_0_14: string;
+  household_females_15_plus: string;
+  household_males_15_59: string;
+  household_males_60_plus: string;
   stove_model_uuid: string;
   serial_number: string;
+  id_photo: File | null;
+  baseline_stove_photo: File | null;
   customer_photo: File | null;
-  stove_photo: File | null;
   gps: { latitude: number; longitude: number } | null;
   generate_payment_account: boolean;
   payment_method: PaymentMethod;
@@ -45,9 +69,26 @@ interface RegistrationDraft {
 function initialDraft(): RegistrationDraft {
   return {
     registration_reference: '', nin: '', bvn: '', full_name: '', phone_number: '', email: '',
-    address: '', state: '', lga: '', date_of_birth: '', gender: '', stove_model_uuid: '',
-    serial_number: '', customer_photo: null, stove_photo: null, gps: null,
+    address: '', state: '', lga: '', ward: '', date_of_birth: '', gender: '',
+    household_children_0_14: '', household_females_15_plus: '', household_males_15_59: '', household_males_60_plus: '',
+    stove_model_uuid: '', serial_number: '', id_photo: null, baseline_stove_photo: null, customer_photo: null, gps: null,
     generate_payment_account: false, payment_method: 'paystack', accepted_terms: false,
+  };
+}
+
+/**
+ * The draft as the schema expects it: a typed state in its stored spelling, and household
+ * counts as numbers (NaN when blank, which the schema rejects).
+ */
+function withHouseholdCounts(draft: RegistrationDraft) {
+  const count = (value: string) => (value.trim() === '' ? Number.NaN : Number(value));
+  return {
+    ...draft,
+    state: matchState(draft.state) ?? draft.state,
+    household_children_0_14: count(draft.household_children_0_14),
+    household_females_15_plus: count(draft.household_females_15_plus),
+    household_males_15_59: count(draft.household_males_15_59),
+    household_males_60_plus: count(draft.household_males_60_plus),
   };
 }
 
@@ -71,6 +112,7 @@ export function RegisterCustomerDialog({ trigger }: { trigger: ReactNode }) {
   const [isLocating, setIsLocating] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
+  const [assignedSerial, setAssignedSerial] = useState('');
   const signatureRef = useRef<SignaturePadHandle>(null);
 
   const ninLookup = useNinLookup();
@@ -80,10 +122,27 @@ export function RegisterCustomerDialog({ trigger }: { trigger: ReactNode }) {
   const registrationTerms = useRegistrationTerms();
   const stoveModels = useStoveModels();
   const inStockUnits = useInStockSerialSearch(useDeferredValue(draft.serial_number.trim()));
+  const nextSerial = useNextSerial(open && step === 2);
+  // Agents can type any LGA or ward; the list only suggests. Suggestions need a recognised state.
+  const knownState = matchState(draft.state);
+  const locations = useStateLocations(knownState ?? '');
+  const lgaNames = locations.data?.lgas.map((lga) => lga.name) ?? [];
+  const knownLga = matchPlace(lgaNames, draft.lga);
+  const lgaWards = locations.data?.lgas.find((lga) => lga.name === knownLga)?.wards ?? [];
+  const knownWard = matchPlace(lgaWards, draft.ward);
+
+  /** Typing a different state or LGA clears what was entered below it, which belonged to the old one. */
+  const setPlace = (field: 'state' | 'lga' | 'ward', value: string) =>
+    setDraft((current) => {
+      const next = { ...current, [field]: value };
+      if (field === 'state' && matchState(value) !== matchState(current.state)) return { ...next, lga: '', ward: '' };
+      if (field === 'lga' && matchPlace(lgaNames, value) !== matchPlace(lgaNames, current.lga)) return { ...next, ward: '' };
+      return next;
+    });
 
   const resetAndClose = () => {
     setOpen(false); setStep(1); setDraft(initialDraft()); setNinError(null); setBvnMessage(null);
-    setSubmitError(null); setVerified(false); setHasSignature(false); setCompleted(false);
+    setSubmitError(null); setVerified(false); setHasSignature(false); setCompleted(false); setAssignedSerial('');
   };
 
   const openDialog = () => {
@@ -127,7 +186,7 @@ export function RegisterCustomerDialog({ trigger }: { trigger: ReactNode }) {
   };
 
   const continueFromDetails = () => {
-    const parsed = customerDetailsSchema.safeParse(draft);
+    const parsed = customerDetailsSchema.safeParse(withHouseholdCounts(draft));
     if (!parsed.success) {
       setSubmitError(parsed.error.issues[0]?.message ?? 'Complete the required customer and stove details before continuing.');
       return;
@@ -150,29 +209,31 @@ export function RegisterCustomerDialog({ trigger }: { trigger: ReactNode }) {
 
   const submit = async () => {
     setSubmitError(null);
-    if (!draft.customer_photo || !draft.stove_photo || !draft.gps || !draft.accepted_terms) {
-      setSubmitError('Customer photo, stove photo, GPS location, and consent are all required.'); return;
+    if (!draft.id_photo || !draft.baseline_stove_photo || !draft.customer_photo || !draft.gps || !draft.accepted_terms) {
+      setSubmitError('All three photos, the GPS location and the signed agreement are required.'); return;
     }
     if (!registrationTerms.data || registrationTerms.isError) {
-      setSubmitError('The registration consent could not be loaded. Refresh and try again.'); return;
+      setSubmitError('The beneficiary agreement could not be loaded. Refresh and try again.'); return;
     }
     try {
       setIsUploading(true);
       const signatureFile = await signatureRef.current?.toFile();
       if (!signatureFile) throw new Error('Customer signature is required');
-      const [customer_photo, stove_photo, signature] = await Promise.all([
+      const [id_photo, baseline_stove_photo, customer_photo, signature] = await Promise.all([
+        uploadRegistrationAsset(draft.id_photo, 'id_photo', draft.registration_reference),
+        uploadRegistrationAsset(draft.baseline_stove_photo, 'baseline_stove_photo', draft.registration_reference),
         uploadRegistrationAsset(draft.customer_photo, 'customer_photo', draft.registration_reference),
-        uploadRegistrationAsset(draft.stove_photo, 'stove_photo', draft.registration_reference),
         uploadRegistrationAsset(signatureFile, 'signature', draft.registration_reference),
       ]);
       const parsed = createCustomerSchema.safeParse({
-        ...draft, customer_photo, stove_photo, gps: draft.gps, signature,
+        ...withHouseholdCounts(draft), id_photo, baseline_stove_photo, customer_photo, gps: draft.gps, signature,
         terms_version: registrationTerms.data.version,
       });
       if (!parsed.success) { setSubmitError(parsed.error.issues[0]?.message ?? 'Check the form and try again.'); return; }
       setIsUploading(false);
       const customerResult = await createCustomer.mutateAsync(parsed.data);
       if (!customerResult.success) { setSubmitError(customerResult.error.message); return; }
+      setAssignedSerial(customerResult.data.stove_unit?.serial_number ?? draft.serial_number.trim());
       toast.success('Customer registered and stove assigned');
       if (draft.generate_payment_account) {
         const paymentResult = await createPaymentAccount.mutateAsync({
@@ -195,14 +256,17 @@ export function RegisterCustomerDialog({ trigger }: { trigger: ReactNode }) {
   // Exact match only — serial numbers are case-sensitive.
   const stockedUnit = inStockUnits.data?.find((u) => u.serial_number === serialNumber);
   const identityLabel = draft.nin ? `NIN *****${draft.nin.slice(-4)}` : draft.bvn ? `BVN *****${draft.bvn.slice(-4)}` : '—';
+  const household = HOUSEHOLD_GROUPS.map(({ key }) => Number(draft[key]) || 0);
+  const householdTotal = household.reduce((sum, count) => sum + count, 0);
 
   const summaryRows: Array<{ label: string; value: string }> = [
     { label: 'Full name', value: draft.full_name },
     { label: 'Phone', value: draft.phone_number },
     { label: 'Verified with', value: identityLabel },
-    { label: 'Address', value: `${draft.address}, ${draft.state} ${draft.lga}`.replace(/,\s*$/, '') },
-    { label: 'Stove', value: `${selectedModel?.name ?? ''} · ${serialNumber}`.trim() || '—' },
-    { label: 'Evidence', value: `${draft.customer_photo ? 'Customer photo' : ''}${draft.customer_photo && draft.stove_photo ? ', ' : ''}${draft.stove_photo ? 'stove photo' : ''}${draft.gps ? ', GPS' : ''}` },
+    { label: 'Address', value: [draft.address, `${draft.ward} ward`, `${draft.lga} LGA`, draft.state].join(', ') },
+    { label: 'Household', value: `${householdTotal} ${householdTotal === 1 ? 'person' : 'people'}: ${household[0]} children, ${household[1]} females, ${household[2]} males 15–59, ${household[3]} males 60+` },
+    { label: 'Stove', value: `${selectedModel?.name ?? ''} · ${serialNumber || `next number${nextSerial.data ? ` (${nextSerial.data.serial_number})` : ''}`}` },
+    { label: 'Evidence', value: [...PHOTOS.filter(({ key }) => draft[key]).map(({ label }) => label), ...(draft.gps ? ['GPS'] : [])].join(', ') },
   ];
 
   return (
@@ -240,26 +304,31 @@ export function RegisterCustomerDialog({ trigger }: { trigger: ReactNode }) {
             <div><Label htmlFor="email">Email (optional)</Label><Input id="email" type="email" value={draft.email} onChange={(event) => setDraft((current) => ({ ...current, email: event.target.value }))} /></div>
             <div><Label htmlFor="date_of_birth">Date of birth (optional)</Label><Input id="date_of_birth" type="date" value={draft.date_of_birth} onChange={(event) => setDraft((current) => ({ ...current, date_of_birth: event.target.value }))} /></div>
             <div><Label htmlFor="gender">Gender</Label><select id="gender" className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm" value={draft.gender} onChange={(event) => setDraft((current) => ({ ...current, gender: event.target.value as Gender }))}><option value="">Select</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select></div>
-            <div className="sm:col-span-2"><Label htmlFor="address">Address</Label><Input id="address" value={draft.address} onChange={(event) => setDraft((current) => ({ ...current, address: event.target.value }))} /></div>
-            <div><Label htmlFor="state">State</Label><select id="state" className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm" value={draft.state} onChange={(event) => setDraft((current) => ({ ...current, state: event.target.value }))}><option value="">Select a state</option>{NIGERIAN_STATES.map((state) => <option key={state} value={state}>{state === 'FCT' ? 'FCT (Abuja)' : state}</option>)}</select></div>
-            <div><Label htmlFor="lga">LGA</Label><Input id="lga" value={draft.lga} onChange={(event) => setDraft((current) => ({ ...current, lga: event.target.value }))} /></div>
+            <div><Label htmlFor="state">State</Label><Input id="state" list="state_options" autoComplete="off" placeholder="Pick or type a state" value={draft.state} onChange={(event) => setPlace('state', event.target.value)} /><datalist id="state_options">{NIGERIAN_STATES.map((state) => <option key={state} value={state}>{state === 'FCT' ? 'FCT (Abuja)' : undefined}</option>)}</datalist>{draft.state.trim() && !knownState ? <p className="mt-1 text-xs text-destructive">Not a Nigerian state. Pick one from the list.</p> : null}</div>
+            <div><Label htmlFor="lga">LGA</Label><Input id="lga" list="lga_options" autoComplete="off" placeholder={knownState && locations.isLoading ? 'Loading LGAs…' : 'Pick or type an LGA'} value={draft.lga} onChange={(event) => setPlace('lga', event.target.value)} /><datalist id="lga_options">{lgaNames.map((name) => <option key={name} value={name} />)}</datalist>{draft.lga.trim() && locations.data && !knownLga ? <p className="mt-1 text-xs text-muted-foreground">Not on the INEC list for {knownState}. It will be saved as typed.</p> : null}</div>
+            <div><Label htmlFor="ward">Ward</Label><Input id="ward" list="ward_options" autoComplete="off" placeholder="Pick or type a ward" value={draft.ward} onChange={(event) => setPlace('ward', event.target.value)} /><datalist id="ward_options">{lgaWards.map((ward) => <option key={ward} value={ward} />)}</datalist>{draft.ward.trim() && knownLga && !knownWard ? <p className="mt-1 text-xs text-muted-foreground">Not on the INEC list for {knownLga}. It will be saved as typed.</p> : null}</div>
+            <div><Label htmlFor="address">House, street or village</Label><Input id="address" value={draft.address} onChange={(event) => setDraft((current) => ({ ...current, address: event.target.value }))} /></div>
+            {locations.isError ? <p role="alert" className="text-sm text-muted-foreground sm:col-span-2">The LGA and ward suggestions could not be loaded. You can still type them.</p> : null}
           </div>
-          <div className="border-t border-border pt-4"><p className="text-sm font-medium text-ink">Delivered stove</p><div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2"><div><Label htmlFor="stove_model">Model</Label><select id="stove_model" className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm" value={draft.stove_model_uuid} onChange={(event) => setDraft((current) => ({ ...current, stove_model_uuid: event.target.value }))}><option value="">Select a model</option>{stoveModels.data?.map((model) => <option key={model.stove_model_uuid} value={model.stove_model_uuid}>{model.name}</option>)}</select></div><div><Label htmlFor="serial_number">Serial number</Label><Input id="serial_number" list="in_stock_serials" autoComplete="off" autoCapitalize="off" spellCheck={false} placeholder="Pick from stock or type one" value={draft.serial_number} onChange={(event) => setDraft((current) => ({ ...current, serial_number: event.target.value }))} /><datalist id="in_stock_serials">{inStockUnits.data?.map((unit) => <option key={unit.stove_unit_uuid} value={unit.serial_number}>{unit.model.name}</option>)}</datalist></div></div><p className="mt-2 text-xs text-muted-foreground">{!serialNumber ? 'Any serial number can go with any model. Serial numbers are case-sensitive.' : stockedUnit ? (stockedUnit.stove_model_uuid === draft.stove_model_uuid || !draft.stove_model_uuid ? `In stock as ${stockedUnit.model.name}.` : `In stock as ${stockedUnit.model.name} — it will be recorded as ${selectedModel?.name ?? 'the selected model'}.`) : 'Not in stock — this serial will be added to inventory when you register.'}</p></div>
+          <div className="border-t border-border pt-4"><p className="text-sm font-medium text-ink">Household members</p><p className="mt-1 text-xs text-muted-foreground">Everyone who lives in the household, including the customer. Enter 0 for a group with nobody in it.</p><div className="mt-2 grid grid-cols-2 gap-4 sm:grid-cols-4">{HOUSEHOLD_GROUPS.map(({ key, label }) => <div key={key}><Label htmlFor={key}>{label}</Label><Input id={key} type="number" inputMode="numeric" min={0} max={50} step={1} value={draft[key]} onChange={(event) => setDraft((current) => ({ ...current, [key]: event.target.value.replace(/\D/g, '') }))} /></div>)}</div><p className="mt-2 text-xs text-muted-foreground">Total: {householdTotal} {householdTotal === 1 ? 'person' : 'people'}</p></div>
+          <div className="border-t border-border pt-4"><p className="text-sm font-medium text-ink">Delivered stove</p><div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2"><div><Label htmlFor="stove_model">Model</Label><select id="stove_model" className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm" value={draft.stove_model_uuid} onChange={(event) => setDraft((current) => ({ ...current, stove_model_uuid: event.target.value }))}><option value="">Select a model</option>{stoveModels.data?.map((model) => <option key={model.stove_model_uuid} value={model.stove_model_uuid}>{model.name}</option>)}</select></div><div><Label htmlFor="serial_number">Serial number (optional)</Label><Input id="serial_number" list="in_stock_serials" autoComplete="off" autoCapitalize="off" spellCheck={false} placeholder={nextSerial.data ? `Leave empty for ${nextSerial.data.serial_number}` : 'Leave empty for the next number'} value={draft.serial_number} onChange={(event) => setDraft((current) => ({ ...current, serial_number: event.target.value }))} /><datalist id="in_stock_serials">{inStockUnits.data?.map((unit) => <option key={unit.stove_unit_uuid} value={unit.serial_number}>{unit.model.name}</option>)}</datalist></div></div><p className="mt-2 text-xs text-muted-foreground">{!serialNumber ? `Leave this empty and the stove gets the next Planethos number${nextSerial.data ? `, ${nextSerial.data.serial_number}` : ''}, when you register. Or pick a serial from stock or type the one on the stove.` : stockedUnit ? (stockedUnit.stove_model_uuid === draft.stove_model_uuid || !draft.stove_model_uuid ? `In stock as ${stockedUnit.model.name}.` : `In stock as ${stockedUnit.model.name} — it will be recorded as ${selectedModel?.name ?? 'the selected model'}.`) : 'Not in stock — this serial will be added to inventory when you register.'}</p></div>
           {submitError ? <p role="alert" className="text-sm text-destructive">{submitError}</p> : null}
           <div className="flex justify-between"><Button type="button" variant="secondary" onClick={() => setStep(1)}>Back</Button><Button type="button" onClick={continueFromDetails}>Continue</Button></div>
         </div> : null}
         {step === 3 ? <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">Capture delivery evidence at the customer&apos;s location.</p>
-          <div><Label htmlFor="customer_photo">Customer photo</Label><Input id="customer_photo" type="file" accept="image/jpeg,image/png,image/heic,image/heif" capture="user" onChange={(event) => setDraft((current) => ({ ...current, customer_photo: event.target.files?.[0] ?? null }))} />{draft.customer_photo ? <p className="mt-1 text-xs text-muted-foreground">{draft.customer_photo.name}</p> : null}</div>
-          <div><Label htmlFor="stove_photo">Stove photo</Label><Input id="stove_photo" type="file" accept="image/jpeg,image/png,image/heic,image/heif" capture="environment" onChange={(event) => setDraft((current) => ({ ...current, stove_photo: event.target.files?.[0] ?? null }))} />{draft.stove_photo ? <p className="mt-1 text-xs text-muted-foreground">{draft.stove_photo.name}</p> : null}</div>
+          <p className="text-sm text-muted-foreground">Capture delivery evidence at the customer&apos;s home.</p>
+          {PHOTOS.map(({ key, label, hint }) => {
+            const file = draft[key];
+            return <div key={key}><Label htmlFor={key}>{label}</Label><p className="mb-1 text-xs text-muted-foreground">{hint}</p><Input id={key} type="file" accept="image/jpeg,image/png,image/heic,image/heif" capture="environment" onChange={(event) => setDraft((current) => ({ ...current, [key]: event.target.files?.[0] ?? null }))} />{file ? <p className="mt-1 text-xs text-muted-foreground">{file.name}</p> : null}</div>;
+          })}
           <div className="rounded-lg border border-border p-3"><p className="text-sm font-medium text-ink">Installation GPS location</p><p className="mt-1 text-xs text-muted-foreground">Location is captured from this device when the stove is delivered.</p><div className="mt-3 flex items-center gap-3"><Button type="button" variant="secondary" onClick={captureLocation} isLoading={isLocating}>Capture location</Button>{draft.gps ? <span className="text-xs text-success">Location captured</span> : null}</div></div>
           {submitError ? <p role="alert" className="text-sm text-destructive">{submitError}</p> : null}
-          <div className="flex justify-between"><Button type="button" variant="secondary" onClick={() => setStep(2)}>Back</Button><Button type="button" disabled={!draft.customer_photo || !draft.stove_photo || !draft.gps} onClick={() => { setSubmitError(null); setStep(4); }}>Continue</Button></div>
+          <div className="flex justify-between"><Button type="button" variant="secondary" onClick={() => setStep(2)}>Back</Button><Button type="button" disabled={PHOTOS.some(({ key }) => !draft[key]) || !draft.gps} onClick={() => { setSubmitError(null); setStep(4); }}>Continue</Button></div>
         </div> : null}
         {!completed && step === 4 ? <div className="space-y-4">
           <div className="rounded-lg border border-border bg-surface p-4">
             <p className="text-sm font-semibold text-ink">Confirm &amp; sign</p>
-            <p className="mt-1 text-sm text-muted-foreground">Review the registration, then have the customer sign.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Review the registration, read the agreement to the customer, then have them sign.</p>
             <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
               {summaryRows.map((row) => (
                 <div key={row.label} className="flex flex-col">
@@ -271,14 +340,14 @@ export function RegisterCustomerDialog({ trigger }: { trigger: ReactNode }) {
           </div>
 
           <div className="rounded-lg border border-border p-4">
-            <p className="text-sm font-semibold text-ink">Customer consent</p>
-            {registrationTerms.isLoading ? <p className="mt-2 text-sm text-muted-foreground">Loading consent…</p> : registrationTerms.data ? <p className="mt-2 text-sm leading-6 text-ink">{registrationTerms.data.text}</p> : <p role="alert" className="mt-2 text-sm text-destructive">The consent could not be loaded.</p>}
+            <p className="text-sm font-semibold text-ink">Beneficiary agreement</p>
+            {registrationTerms.isLoading ? <p className="mt-2 text-sm text-muted-foreground">Loading the agreement…</p> : registrationTerms.data ? <div className="mt-2 max-h-72 overflow-y-auto whitespace-pre-line rounded-lg bg-surface p-3 text-sm leading-6 text-ink">{registrationTerms.data.text}</div> : <p role="alert" className="mt-2 text-sm text-destructive">The agreement could not be loaded.</p>}
             <div className="mt-4">
               <SignaturePad ref={signatureRef} onChange={setHasSignature} />
             </div>
           </div>
 
-          <label className="flex items-start gap-3 rounded-lg border border-border p-3"><input type="checkbox" checked={draft.accepted_terms} onChange={(event) => setDraft((current) => ({ ...current, accepted_terms: event.target.checked }))} className="mt-0.5 size-4" /><span className="text-sm text-ink">The customer has read and accepted this consent before signing.</span></label>
+          <label className="flex items-start gap-3 rounded-lg border border-border p-3"><input type="checkbox" checked={draft.accepted_terms} onChange={(event) => setDraft((current) => ({ ...current, accepted_terms: event.target.checked }))} className="mt-0.5 size-4" /><span className="text-sm text-ink">The agreement was read or explained to the customer in a language they understand, and they accepted it before signing.</span></label>
           <div className="rounded-lg border border-border p-3">
             <label className="flex items-start gap-3">
               <input type="checkbox" checked={draft.generate_payment_account} onChange={(event) => setDraft((current) => ({ ...current, generate_payment_account: event.target.checked }))} className="mt-0.5 size-4" />
@@ -303,7 +372,7 @@ export function RegisterCustomerDialog({ trigger }: { trigger: ReactNode }) {
           <div>
             <h2 className="text-lg font-semibold text-ink">Customer registered</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              {selectedModel?.name ?? 'Stove'} · {serialNumber} has been assigned to {draft.full_name || 'the customer'}.
+              {selectedModel?.name ?? 'Stove'} · {assignedSerial} has been assigned to {draft.full_name || 'the customer'}.
             </p>
           </div>
           <Button type="button" onClick={resetAndClose}>Done</Button>

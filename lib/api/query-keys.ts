@@ -11,6 +11,10 @@ export const queryKeys = {
   stoves: {
     models: () => ['stoves', 'models'] as const,
     units: <T extends object>(params: T) => ['stoves', 'units', params] as const,
+    nextSerial: () => ['stoves', 'next-serial'] as const,
+  },
+  locations: {
+    state: (state: string) => ['locations', state] as const,
   },
   payments: {
     account: (customerUuid: string) => ['payments', 'account', customerUuid] as const,

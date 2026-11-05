@@ -1,4 +1,4 @@
-import { CookingPot, Flag, MapPin, Signature, UserRound } from 'lucide-react';
+import { CookingPot, Flag, Flame, IdCard, MapPin, Signature, UserRound } from 'lucide-react';
 import { StatusBadge } from '@/components/ui/status-badge';
 import type { KycStatus } from '@/app/agent/_lib/types';
 import { cn } from '@/lib/utils';
@@ -56,16 +56,19 @@ export function FlagAlert({ flag }: { flag: AuditFlag }) {
 }
 
 const EVIDENCE = [
+  { key: 'id_photo', label: 'ID photo', icon: IdCard },
+  { key: 'baseline_stove_photo', label: 'Baseline stove photo', icon: Flame },
   { key: 'customer_photo', label: 'Customer photo', icon: UserRound },
   { key: 'stove_photo', label: 'Stove photo', icon: CookingPot },
   { key: 'gps', label: 'GPS location', icon: MapPin },
   { key: 'signature', label: 'Signature', icon: Signature },
 ] as const;
 
+/** One icon per piece of evidence the registration was asked for. */
 export function EvidenceIcons({ evidence }: { evidence: AuditStove['evidence'] }) {
   return (
     <span className="inline-flex gap-1">
-      {EVIDENCE.map(({ key, label, icon: Icon }) => {
+      {EVIDENCE.filter(({ key }) => evidence[key] !== null).map(({ key, label, icon: Icon }) => {
         const present = evidence[key];
         const text = `${label} ${present ? 'captured' : 'missing'}`;
         return (

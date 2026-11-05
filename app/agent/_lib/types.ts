@@ -28,8 +28,11 @@ export interface StoveUnitSummary {
   serial_number: string;
   status: StoveUnitStatus;
   assigned_at: string | null;
+  /** The customer with the new stove (earlier registrations: the customer alone). */
   customer_photo_url: string | null;
+  /** Only on registrations from before the beneficiary agreement. */
   stove_photo_url: string | null;
+  baseline_stove_photo_url: string | null;
   installation_latitude: number | null;
   installation_longitude: number | null;
   installation_captured_at: string | null;
@@ -55,8 +58,15 @@ export interface Customer {
   address: string | null;
   state: string | null;
   lga: string | null;
+  ward: string | null;
   date_of_birth: string | null;
   gender: string | null;
+  // Household members by age group; null on registrations from before they were asked.
+  household_children_0_14: number | null;
+  household_females_15_plus: number | null;
+  household_males_15_59: number | null;
+  household_males_60_plus: number | null;
+  id_photo_url: string | null;
   nin_last4: string | null;
   kyc_status: KycStatus;
   kyc_provider_reference: string | null;
