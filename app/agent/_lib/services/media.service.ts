@@ -5,7 +5,7 @@ import { backendRequest } from '@/lib/api/server-api-client';
 import { executeBackendService } from '@/lib/api/server-service';
 import { ServiceResult } from '@/lib/api/service-result';
 
-export type UploadKind = 'customer_photo' | 'stove_photo' | 'signature';
+export type UploadKind = 'customer_photo' | 'id_photo' | 'baseline_stove_photo' | 'signature';
 
 export interface UploadSignature {
   upload_url: string;

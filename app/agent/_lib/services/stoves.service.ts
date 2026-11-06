@@ -46,6 +46,13 @@ export async function searchInStockStoveUnits(prefix: string): Promise<ServiceRe
   );
 }
 
+/** The serial a registration gets when the agent leaves the serial number empty. */
+export async function getNextSerial(): Promise<ServiceResult<{ serial_number: string }>> {
+  return executeBackendService(() =>
+    backendRequest<{ serial_number: string }>(API_ROUTES.stoves.nextSerial()),
+  );
+}
+
 export interface AddStoveUnitsInput {
   stove_model_uuid: string;
   serial_numbers: string[];

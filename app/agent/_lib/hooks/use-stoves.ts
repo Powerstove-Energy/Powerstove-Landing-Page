@@ -5,6 +5,7 @@ import { queryKeys } from '@/lib/api/query-keys';
 import { unwrapServiceResult } from '@/lib/api/service-result';
 import {
   addStoveUnits,
+  getNextSerial,
   listAvailableStoveUnits,
   listStoveModels,
   searchInStockStoveUnits,
@@ -32,6 +33,16 @@ export function useInStockSerialSearch(prefix: string) {
     queryFn: async () => unwrapServiceResult(await searchInStockStoveUnits(prefix)),
     enabled: prefix.length > 0,
     placeholderData: keepPreviousData,
+  });
+}
+
+/** A preview of the next Planethos serial; always refetched because other agents use them up. */
+export function useNextSerial(enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.stoves.nextSerial(),
+    queryFn: async () => unwrapServiceResult(await getNextSerial()),
+    enabled,
+    staleTime: 0,
   });
 }
 

@@ -1,10 +1,9 @@
 'use client';
 
-import { CookingPot, ExternalLink, UserRound } from 'lucide-react';
-import { paymentProviderName } from '@/app/agent/_lib/types';
+import { CookingPot, ExternalLink, Flame, IdCard, UserRound } from 'lucide-react';
 import { useAuditStove } from '../_lib/hooks/use-auditor';
 import { AccountBadge, FlagAlert, KycBadge } from './badges';
-import { formatDate, formatDateTime, formatNaira } from './format';
+import { formatDate, formatDateTime } from './format';
 import { Details, RecordHeader, RecordSection, RecordState, useRecordDrawer } from './record-drawer';
 
 function Photo({ url, label, icon: Icon }: { url: string | null; label: string; icon: typeof UserRound }) {
@@ -36,7 +35,7 @@ export function StoveRecord({ stoveUnitUuid }: { stoveUnitUuid: string }) {
   if (isLoading) return <RecordState message="Loading the registration…" />;
   if (isError || !stove) return <RecordState tone="error" message={error?.message ?? 'This stove could not be loaded.'} />;
 
-  const { customer, evidence, agreement, payment, agent } = stove;
+  const { customer, household, evidence, agreement, agent } = stove;
   const hasGps = evidence.latitude !== null && evidence.longitude !== null;
   const coordinates = hasGps ? `${evidence.latitude!.toFixed(5)}, ${evidence.longitude!.toFixed(5)}` : null;
 
@@ -64,7 +63,9 @@ export function StoveRecord({ stoveUnitUuid }: { stoveUnitUuid: string }) {
               ['Email', customer.email ?? '—'],
               ['Gender', customer.gender ? customer.gender[0].toUpperCase() + customer.gender.slice(1) : '—'],
               ['Date of birth', customer.date_of_birth ? formatDate(customer.date_of_birth) : '—'],
-              ['Address', [customer.address, customer.lga, customer.state].filter(Boolean).join(', ') || '—'],
+              ['Address', customer.address ?? '—'],
+              ['Ward', customer.ward ?? '—'],
+              ['LGA / State', [customer.lga, customer.state].filter(Boolean).join(', ') || '—'],
               [
                 'Identity',
                 <span key="identity" className="inline-flex flex-wrap items-center gap-2">
@@ -80,10 +81,37 @@ export function StoveRecord({ stoveUnitUuid }: { stoveUnitUuid: string }) {
           />
         </RecordSection>
 
+        <RecordSection title="Household">
+          {household ? (
+            <Details
+              rows={[
+                ['Children (0–14)', String(household.children_0_14)],
+                ['Females (15+)', String(household.females_15_plus)],
+                ['Males (15–59)', String(household.males_15_59)],
+                ['Males (60+)', String(household.males_60_plus)],
+                ['Total', `${household.total} ${household.total === 1 ? 'person' : 'people'}`],
+              ]}
+            />
+          ) : (
+            <p className="text-sm text-muted-foreground">Not recorded. This registration is from before the household was asked for.</p>
+          )}
+        </RecordSection>
+
         <RecordSection title="Delivery evidence">
+          {/* Each registration shows the photos its agreement version asked for. */}
           <div className="grid grid-cols-2 gap-3">
-            <Photo url={evidence.customer_photo_url} label="Customer photo" icon={UserRound} />
-            <Photo url={evidence.stove_photo_url} label="Stove photo" icon={CookingPot} />
+            {evidence.captures_beneficiary_evidence ? (
+              <>
+                <Photo url={evidence.id_photo_url} label="Government ID" icon={IdCard} />
+                <Photo url={evidence.baseline_stove_photo_url} label="Old (baseline) stove" icon={Flame} />
+                <Photo url={evidence.customer_photo_url} label="Customer with the new stove" icon={UserRound} />
+              </>
+            ) : (
+              <>
+                <Photo url={evidence.customer_photo_url} label="Customer photo" icon={UserRound} />
+                <Photo url={evidence.stove_photo_url} label="Stove photo" icon={CookingPot} />
+              </>
+            )}
           </div>
           {coordinates ? (
             <Details
@@ -109,8 +137,8 @@ export function StoveRecord({ stoveUnitUuid }: { stoveUnitUuid: string }) {
           )}
         </RecordSection>
 
-        <RecordSection title="Signed carbon agreement">
-          {agreement.terms_text ? <p className="max-w-prose text-sm leading-6 text-muted-foreground">{agreement.terms_text}</p> : null}
+        <RecordSection title="Signed agreement">
+          {agreement.terms_text ? <p className="max-w-prose whitespace-pre-line text-sm leading-6 text-muted-foreground">{agreement.terms_text}</p> : null}
           {agreement.signature_image_url ? (
             // eslint-disable-next-line @next/next/no-img-element -- Cloudinary-hosted signature
             <img
@@ -125,22 +153,6 @@ export function StoveRecord({ stoveUnitUuid }: { stoveUnitUuid: string }) {
             {agreement.terms_version ? `Version ${agreement.terms_version}` : 'No agreement version recorded'}
             {agreement.accepted_at ? ` · accepted ${formatDateTime(agreement.accepted_at)}` : ''}
           </p>
-        </RecordSection>
-
-        <RecordSection title="Payment">
-          <Details
-            rows={[
-              ['Method', payment.account ? paymentProviderName(payment.account.provider) : 'No payment account yet'],
-              ...(payment.account && payment.account.provider !== 'cash'
-                ? ([
-                    ['Account', <span key="acct" className="font-mono">{payment.account.account_number}</span>],
-                    ['Bank', `${payment.account.bank_name} · ${payment.account.account_name}`],
-                  ] as Array<[string, React.ReactNode]>)
-                : []),
-              ['Received', `${formatNaira(payment.total_received_kobo)} from ${payment.payments_count} payment${payment.payments_count === 1 ? '' : 's'}`],
-              ...(payment.last_paid_at ? [['Last payment', formatDateTime(payment.last_paid_at)] as [string, string]] : []),
-            ]}
-          />
         </RecordSection>
 
         <RecordSection title="Registered by">

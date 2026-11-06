@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { useCustomer, useCustomerTransactions, useRegistrationTerms } from '@/app/agent/_lib/hooks/use-customers';
 import { usePaymentAccount } from '@/app/agent/_lib/hooks/use-payments';
-import { KycStatus, PaymentTransactionStatus, paymentProviderName } from '@/app/agent/_lib/types';
+import { Customer, KycStatus, PaymentTransactionStatus, paymentProviderName } from '@/app/agent/_lib/types';
 import { GeneratePaymentAccountDialog } from './generate-payment-account-dialog';
 
 function kycTone(status: KycStatus) {
@@ -21,6 +21,31 @@ function transactionTone(status: PaymentTransactionStatus) {
   if (status === 'SUCCESS') return 'success' as const;
   if (status === 'FAILED') return 'destructive' as const;
   return 'warning' as const;
+}
+
+/** "6 people: 3 children (0–14), …", or null on registrations from before it was asked. */
+function householdSummary(customer: Customer): string | null {
+  const groups = [
+    [customer.household_children_0_14, 'children (0–14)'],
+    [customer.household_females_15_plus, 'females (15+)'],
+    [customer.household_males_15_59, 'males (15–59)'],
+    [customer.household_males_60_plus, 'males (60+)'],
+  ] as const;
+  if (groups.some(([count]) => count === null)) return null;
+  const total = groups.reduce((sum, [count]) => sum + (count ?? 0), 0);
+  return `${total} ${total === 1 ? 'person' : 'people'}: ${groups.map(([count, label]) => `${count} ${label}`).join(', ')}`;
+}
+
+/** Every delivery photo on record. Registrations under the beneficiary agreement have an ID and baseline stove photo. */
+function evidencePhotos(customer: Customer): Array<{ url: string; label: string }> {
+  const unit = customer.stove_unit;
+  const beneficiary = !!(customer.id_photo_url || unit?.baseline_stove_photo_url);
+  return [
+    { url: customer.id_photo_url, label: 'Government ID' },
+    { url: unit?.baseline_stove_photo_url ?? null, label: 'Old (baseline) stove' },
+    { url: unit?.customer_photo_url ?? null, label: beneficiary ? 'Customer with the new stove' : 'Customer photo' },
+    { url: unit?.stove_photo_url ?? null, label: 'Stove photo' },
+  ].filter((photo): photo is { url: string; label: string } => !!photo.url);
 }
 
 function formatNaira(kobo: number): string {
@@ -49,6 +74,9 @@ export function CustomerDetailView({ customerUuid }: { customerUuid: string }) {
   if (isError || !customer) {
     return <p className="text-sm text-destructive">Could not load this customer.</p>;
   }
+
+  const household = householdSummary(customer);
+  const photos = evidencePhotos(customer);
 
   return (
     <div>
@@ -85,13 +113,14 @@ export function CustomerDetailView({ customerUuid }: { customerUuid: string }) {
             <p>Email: {customer.email ?? '—'}</p>
             <p>Address: {customer.address ?? '—'}</p>
             <p>
-              State / LGA: {customer.state ?? '—'} / {customer.lga ?? '—'}
+              State / LGA / Ward: {customer.state ?? '—'} / {customer.lga ?? '—'} / {customer.ward ?? '—'}
             </p>
             <p>
               Date of birth:{' '}
               {customer.date_of_birth ? new Date(customer.date_of_birth).toLocaleDateString() : '—'}
             </p>
             <p>Gender: {customer.gender ?? '—'}</p>
+            <p>Household: {household ?? '—'}</p>
             <p>Registered: {new Date(customer.created_at).toLocaleDateString()}</p>
           </CardContent>
         </Card>
@@ -119,28 +148,18 @@ export function CustomerDetailView({ customerUuid }: { customerUuid: string }) {
           <CardTitle>Delivery evidence</CardTitle>
         </CardHeader>
         <CardContent>
-          {customer.stove_unit?.customer_photo_url || customer.stove_unit?.stove_photo_url ? (
-            <div className="grid grid-cols-2 gap-3">
-              {customer.stove_unit?.customer_photo_url ? (
-                <figure>
+          {photos.length ? (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {photos.map((photo) => (
+                <figure key={photo.label}>
                   <img
-                    src={customer.stove_unit.customer_photo_url}
-                    alt="Customer photo"
-                    className="aspect-[3/4] w-full rounded-lg border border-border object-cover"
-                  />
-                  <figcaption className="mt-1 text-xs text-muted-foreground">Customer photo</figcaption>
-                </figure>
-              ) : null}
-              {customer.stove_unit?.stove_photo_url ? (
-                <figure>
-                  <img
-                    src={customer.stove_unit.stove_photo_url}
-                    alt="Stove photo"
+                    src={photo.url}
+                    alt={photo.label}
                     className="aspect-[4/3] w-full rounded-lg border border-border object-cover"
                   />
-                  <figcaption className="mt-1 text-xs text-muted-foreground">Stove photo</figcaption>
+                  <figcaption className="mt-1 text-xs text-muted-foreground">{photo.label}</figcaption>
                 </figure>
-              ) : null}
+              ))}
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">No delivery evidence recorded.</p>
@@ -161,13 +180,16 @@ export function CustomerDetailView({ customerUuid }: { customerUuid: string }) {
 
       <Card className="mt-4">
         <CardHeader>
-          <CardTitle>Signed carbon ownership agreement</CardTitle>
+          <CardTitle>Signed agreement</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {registrationTerms.data ? (
-            <p className="text-sm leading-6 text-ink">{registrationTerms.data.text}</p>
+          {/* Only the current wording is served here, so older signatures show their version tag alone. */}
+          {registrationTerms.data && registrationTerms.data.version === customer.terms_version ? (
+            <p className="whitespace-pre-line text-sm leading-6 text-ink">{registrationTerms.data.text}</p>
           ) : (
-            <p className="text-sm text-muted-foreground">Agreement text unavailable.</p>
+            <p className="text-sm text-muted-foreground">
+              {customer.terms_version ? 'Signed under an earlier version of the agreement.' : 'Agreement text unavailable.'}
+            </p>
           )}
           {customer.signature_image_url ? (
             <div>

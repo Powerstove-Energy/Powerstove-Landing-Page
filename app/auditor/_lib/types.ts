@@ -3,7 +3,7 @@ import type { KycStatus, PageInfo } from '@/app/agent/_lib/types';
 export type FlagSeverity = 'high' | 'medium' | 'low';
 
 export interface AuditFlag {
-  code: 'KYC_FAILED' | 'KYC_PENDING' | 'MISSING_EVIDENCE' | 'SAME_LOCATION' | 'NO_PAYMENT_ACCOUNT' | 'AGENT_SUSPENDED';
+  code: 'KYC_FAILED' | 'KYC_PENDING' | 'MISSING_EVIDENCE' | 'SAME_LOCATION' | 'AGENT_SUSPENDED';
   severity: FlagSeverity;
   title: string;
   detail: string;
@@ -36,19 +36,42 @@ export interface AuditSummary {
   }>;
 }
 
+/**
+ * Which evidence a registration has. Null means it was never asked for: registrations
+ * under the beneficiary agreement have no separate stove photo, and earlier ones have
+ * no ID or baseline stove photo.
+ */
+export interface AuditEvidence {
+  id_photo: boolean | null;
+  baseline_stove_photo: boolean | null;
+  /** The customer with the new stove (earlier registrations: the customer alone). */
+  customer_photo: boolean;
+  stove_photo: boolean | null;
+  gps: boolean;
+  signature: boolean;
+}
+
 export interface AuditStove {
   stove_unit_uuid: string;
   serial_number: string;
   model: { stove_model_uuid: string; name: string };
-  customer: { full_name: string; phone_masked: string; state: string | null; lga: string | null };
+  customer: { full_name: string; phone_masked: string; state: string | null; lga: string | null; ward: string | null };
+  household_size: number | null;
   agent: { agent_uuid: string; full_name: string };
   registered_at: string;
   kyc_status: KycStatus;
   verified_identifier: 'NIN' | 'BVN' | null;
   identifier_last4: string | null;
-  evidence: { customer_photo: boolean; stove_photo: boolean; gps: boolean; signature: boolean };
-  payment_provider: string | null;
+  evidence: AuditEvidence;
   flags: AuditFlag[];
+}
+
+export interface AuditHousehold {
+  children_0_14: number;
+  females_15_plus: number;
+  males_15_59: number;
+  males_60_plus: number;
+  total: number;
 }
 
 export interface AuditStoveList {
@@ -76,11 +99,18 @@ export interface AuditStoveDetail {
     address: string | null;
     state: string | null;
     lga: string | null;
+    ward: string | null;
     kyc_status: KycStatus;
     verified_identifier: 'NIN' | 'BVN' | null;
     identifier_last4: string | null;
   };
+  /** Null on registrations from before the household was asked for. */
+  household: AuditHousehold | null;
   evidence: {
+    /** Signed under the beneficiary agreement, which asks for ID and baseline stove photos. */
+    captures_beneficiary_evidence: boolean;
+    id_photo_url: string | null;
+    baseline_stove_photo_url: string | null;
     customer_photo_url: string | null;
     stove_photo_url: string | null;
     latitude: number | null;
@@ -92,19 +122,6 @@ export interface AuditStoveDetail {
     terms_text: string | null;
     accepted_at: string | null;
     signature_image_url: string | null;
-  };
-  payment: {
-    account: {
-      provider: string;
-      account_number: string;
-      account_name: string;
-      bank_name: string;
-      status: 'ACTIVE' | 'INACTIVE';
-      created_at: string;
-    } | null;
-    total_received_kobo: number;
-    payments_count: number;
-    last_paid_at: string | null;
   };
   agent: AuditAgentProfile;
   history: Array<{ at: string; event: string }>;
@@ -123,7 +140,6 @@ export interface AuditAgentProfile {
 export interface AuditAgent extends AuditAgentProfile {
   stoves_registered: number;
   kyc_verified_pct: number | null;
-  payment_account_pct: number | null;
   last_registration_at: string | null;
   states: string[];
   stoves_needing_review: number;

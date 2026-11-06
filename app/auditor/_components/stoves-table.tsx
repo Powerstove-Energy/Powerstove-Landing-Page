@@ -3,7 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import { useDeferredValue, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { paymentProviderName, type KycStatus } from '@/app/agent/_lib/types';
+import type { KycStatus } from '@/app/agent/_lib/types';
 import { useAuditStoves } from '../_lib/hooks/use-auditor';
 import { toQueryString } from '../_lib/types';
 import { EvidenceIcons, FlagLabel, KycBadge } from './badges';
@@ -13,7 +13,7 @@ import { Pagination } from './pagination';
 import { useRecordDrawer } from './record-drawer';
 
 const PAGE_SIZE = 25;
-const COLUMNS = ['Serial / model', 'Customer', 'Registered by', 'Location', 'Date', 'KYC', 'Evidence', 'Payment', 'Review'];
+const COLUMNS = ['Serial / model', 'Customer', 'Registered by', 'Location', 'Household', 'Date', 'KYC', 'Evidence', 'Review'];
 
 export function StovesTable() {
   const searchParams = useSearchParams();
@@ -49,7 +49,7 @@ export function StovesTable() {
         <div>
           <h1 className="text-xl font-semibold text-ink">Registered stoves</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Click a row to see the customer, photos, GPS location, signature and payments.
+            Click a row to see the customer, household, photos, GPS location and signed agreement.
           </p>
         </div>
         <ExportLink href={`/auditor/export/stoves${toQueryString(filters)}`} />
@@ -152,9 +152,12 @@ export function StovesTable() {
                   </td>
                   <td className="px-4 py-3 text-ink">{stove.agent.full_name}</td>
                   <td className="px-4 py-3">
-                    <span className="block text-ink">{stove.customer.lga ?? '—'}</span>
-                    <span className="block text-xs text-muted-foreground">{stove.customer.state ?? '—'}</span>
+                    <span className="block text-ink">{stove.customer.ward ?? stove.customer.lga ?? '—'}</span>
+                    <span className="block text-xs text-muted-foreground">
+                      {[stove.customer.ward ? stove.customer.lga : null, stove.customer.state].filter(Boolean).join(', ') || '—'}
+                    </span>
                   </td>
+                  <td className="px-4 py-3 tabular-nums text-ink">{stove.household_size ?? <span className="text-muted-foreground">—</span>}</td>
                   <td className="whitespace-nowrap px-4 py-3 tabular-nums text-muted-foreground">{formatDate(stove.registered_at)}</td>
                   <td className="px-4 py-3">
                     <KycBadge status={stove.kyc_status} />
@@ -166,9 +169,6 @@ export function StovesTable() {
                   </td>
                   <td className="px-4 py-3">
                     <EvidenceIcons evidence={stove.evidence} />
-                  </td>
-                  <td className="px-4 py-3 text-ink">
-                    {stove.payment_provider ? paymentProviderName(stove.payment_provider) : <span className="text-muted-foreground">None yet</span>}
                   </td>
                   <td className="px-4 py-3">
                     <FlagLabel flags={stove.flags} />
