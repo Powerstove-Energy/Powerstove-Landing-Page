@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 const timelineItems = [
   {
-    year: "2016",
+    year: "2018",
     title: "Powerstove Founded",
     desc: "Okay Esse founded Powerstove Africa in Abuja, Nigeria, with a vision to solve indoor air pollution and energy poverty for African households through smart biomass cookstove technology.",
   },
@@ -119,7 +119,7 @@ export default function EvolutionSection() {
 
         <div className="relative border-l-2 border-gray-200 pl-8 space-y-10">
           {timelineItems.map((item, index) => (
-            <TimelineItem key={item.year} item={item} index={index} />
+            <TimelineItem key={item.title} item={item} index={index} />
           ))}
         </div>
       </div>
