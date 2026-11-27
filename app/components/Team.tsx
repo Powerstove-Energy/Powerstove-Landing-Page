@@ -29,7 +29,7 @@ const team = [
     name: "Saint Moses Agbukor",
     bio: "Experienced IT leader specialising in IoT systems, cybersecurity, and digital transformation for clean energy platforms.",
     img: "/team/saint.webp",
-    linkedin: "#",
+    linkedin: "https://www.linkedin.com/in/saint-agbukor/",
   },
   {
     role: "Board Chairman",
